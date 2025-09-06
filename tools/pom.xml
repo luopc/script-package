@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <name>Script Tools Module</name>
-    <artifactId>script-tools</artifactId>
+    <artifactId>tools</artifactId>
 
     <build>
         <plugins>

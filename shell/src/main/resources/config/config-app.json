@@ -8,9 +8,33 @@
     "script": {
       "initialBatch": 0,
       "language": "shell",
-      "path": "{ROOT_PATH}/opt/{USER_PATH}/script",
+      "path": "{ROOT_PATH}/public/{USER_PATH}/script",
       "groupId": "com.luopc.platform.script",
       "artifactId": "shell",
+      "packageType": "tar.gz",
+      "port": 0,
+      "dependencies": [],
+      "containers": "all",
+      "activeRegion": "all"
+    },
+    "py": {
+      "initialBatch": 0,
+      "language": "python",
+      "path": "{ROOT_PATH}/public/{USER_PATH}/script",
+      "groupId": "com.luopc.platform.script",
+      "artifactId": "python",
+      "packageType": "tar.gz",
+      "port": 0,
+      "dependencies": [],
+      "containers": "all",
+      "activeRegion": "all"
+    },
+    "tools": {
+      "initialBatch": 0,
+      "language": "python",
+      "path": "{ROOT_PATH}/public/{USER_PATH}/script",
+      "groupId": "com.luopc.platform.script",
+      "artifactId": "tools",
       "packageType": "tar.gz",
       "port": 0,
       "dependencies": [],
@@ -33,7 +57,7 @@
     "tcs": {
       "initialBatch": 0,
       "language": "java",
-      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.trade",
       "artifactId": "trade-capture-service",
       "packageType": "jar",
@@ -46,7 +70,7 @@
     "redis": {
       "initialBatch": 0,
       "language": "tools",
-      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.user",
       "artifactId": "user-service",
       "packageType": "tar.gz",
@@ -58,7 +82,7 @@
     "ods": {
       "initialBatch": 0,
       "language": "python",
-      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.order",
       "artifactId": "order-service",
       "packageType": "tar.gz",
@@ -69,7 +93,7 @@
     "auth-service": {
       "initialBatch": 0,
       "language": "react",
-      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.auth",
       "artifactId": "auth-service",
       "packageType": "jar",

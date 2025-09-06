@@ -3,7 +3,7 @@
 #/etc/rc.local
 #/opt/root/script/current/./service-init.sh
 
-function service_init() {
+function service_stop() {
   START_TIME=$(date +%Y-%m-%d_%H:%M:%S)
   APPS_PATH=/home/public/uat/apps
   echo "+-----------------------------------------------------------------------------------+"
@@ -47,5 +47,5 @@ stop_app() {
 }
 
 if [ $# == 0 ]; then
-  service_init
+  service_stop
 fi

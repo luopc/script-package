@@ -406,6 +406,12 @@ function init_config() {
 
 # Main logic processing
 main() {
+
+  if [ $(get_user) == "root" ]; then
+    error "Cannot be run with root account."
+    exit 1
+  fi
+
   # Initialize configuration
   init_config
 
@@ -568,6 +574,9 @@ main() {
     ;;
   esac
 
+  if [[ -d $TEMP_DIR ]]; then
+    rm -rf $TEMP_DIR
+  fi
   exit 0
 }
 

@@ -13,50 +13,6 @@
   "common": {
     "javaHome": "/usr/lib/jvm/java-11-openjdk"
   },
-  "hosts": {
-    "uat": {
-      "app": [
-        "app.luopc.com", "app1.luopc.com"
-      ],
-      "web": [
-        "web.luopc.com", "web1.luopc.com"
-      ],
-      "data": [
-        "data.luopc.com", "data1.luopc.com"
-      ],
-      "core": [
-        "core.luopc.com", "core1.luopc.com"
-      ]
-    },
-    "dev": {
-      "app": [
-        "app.luopc.com", "app2.luopc.com"
-      ],
-      "web": [
-        "web.luopc.com", "web2.luopc.com"
-      ],
-      "data": [
-        "data.luopc.com", "data2.luopc.com"
-      ],
-      "core": [
-        "core.luopc.com"
-      ]
-    },
-    "prd": {
-      "app": [
-        "app.luopc.com", "app3.luopc.com"
-      ],
-      "web": [
-        "web.luopc.com", "web3.luopc.com"
-      ],
-      "data": [
-        "data.luopc.com", "data3.luopc.com"
-      ],
-      "core": [
-        "core.luopc.com", "data4.luopc.com"
-      ]
-    }
-  },
   "uat": {
     "activeRegion": "BJ",
     "logRetentionDays": 30,
