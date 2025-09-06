@@ -250,7 +250,7 @@ function update_soft_link() {
     error "Application path cannot be empty"
     return 1
   fi
-  
+
   if [[ -z "$package_name" ]]; then
     error "Package name cannot be empty"
     return 1
@@ -314,7 +314,7 @@ function _update_soft_link_local() {
   # Handle existing links with backup
   if [[ -L "current" || -d "current" ]]; then
     info "Found existing 'current' link/directory"
-    
+
     # Remove old previous if it exists
     if [[ -L "previous" || -d "previous" ]]; then
       info "Removing old 'previous' link/directory"
@@ -325,7 +325,7 @@ function _update_soft_link_local() {
       fi
       debug "Successfully removed old 'previous'"
     fi
-    
+
     # Move current to previous
     info "Moving 'current' to 'previous'"
     if ! mv "current" "previous"; then
@@ -362,7 +362,7 @@ function _update_soft_link_local() {
   # Return to original directory
   cd "$original_pwd"
   debug "Returned to original directory: $original_pwd"
-  
+
   info "Local symbolic link update completed successfully"
   return 0
 }
@@ -520,7 +520,7 @@ function get_root_path() {
 
   case "$(uname -s)" in
     Linux*)
-      root_path="/opt"
+      root_path=""
       ;;
     Darwin*)
       root_path="/usr/local"

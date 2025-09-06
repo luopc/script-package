@@ -31,17 +31,18 @@ Deployment tool, supports the following commands:
   deploy -t {service-name} [-h {hostname,hostname}]
                                Deploy tools, optionally specify hosts
 
-  deploy -package {service-name} [-v {version} -instance {primary} -g {default} -h {hostname,hostname} -r]
-  deploy -p {service-name} [-v {version} -instance {primary} -g {default} -h {hostname,hostname} -r]
+  deploy -package {service-name} [-v {version} -c {primary} -g {default} -h {hostname,hostname} -r]
+  deploy -p {service-name} [-v {version} -c {primary} -g {default} -h {hostname,hostname} -r]
                                Package service, optional version, instance, group, hosts and restart
 
-  deploy -rollback {service-name} [-v {version} -instance {primary} -g {default} -h {hostname,hostname} -r]
+  deploy -rollback {service-name} [-v {version} -c {primary} -g {default} -h {hostname,hostname} -r]
+  deploy -b {service-name} [-v {version} -c {primary} -g {default} -h {hostname,hostname} -r]
                                Rollback service, optional version, instance, group, hosts and restart
 
 Option descriptions:
   -h {hosts}      Specify hosts, multiple hosts separated by commas
   -v {version}    Specify version number
-  -instance {name} Specify instance name, default primary
+  -c {name}       Specify instance name, default primary
   -g {group}      Specify group, default default
   -r              Restart service after operation
 EOF
@@ -133,11 +134,11 @@ function scp_package() {
   local deploy_package=$2
   local deployHost=$3
 
-  local repo="$(getRootPath)/home/public/$(getUser)/Repository/${language}/"
+  local repo="$(get_artifact_path)/${language}/"
 
   local file_name=$(basename "$DOWNLOAD_PACKAGE")
   REPO_FILE="${repo}${file_name}"
-
+  info "Going to copy package to remote repository: $repo"
   info "↓------------------------------------------------------------------------------------------------------------------------------↓"
   info "                                  process package in remote server, hostName[$deployHost]                                    "
   info "↓                                ----------------------------------------------------------                                    ↓"
@@ -163,7 +164,11 @@ function call_remote_install() {
   local CMD=". ~/.bash_profile;"$DEPLOYMENT_DIR/install.sh" $DCOMMAND $DSERVICE_NAME $REPO_FILE $DEPLOY_VERSION $DINSTANCE $DGROUP $DRESTART"
 
   green_line "run cmd in remote server[$(getUser)@$DEPLOY_HOST]: $CMD"
-  #timeout 120 ssh -q $(getUser)@$DEPLOY_HOST "$CMD"
+  if [[ "$(uname -s)" == "Linux"* ]]; then
+    timeout 120 ssh -q $(getUser)@$DEPLOY_HOST "$CMD"
+  else
+    warn "please run cmd in Linux server."
+  fi
 }
 
 #http://core-server.luopc.com:8082/nexus/service/rest/repository/browse/maven-public/com/luopc/script/common/1.2.8-SNAPSHOT/1.2.8-20230530.143225-18/common-1.2.8-20230530.143225-18-bin.tar.gz
@@ -386,6 +391,12 @@ function check_and_pull_metadata() {
   return 0
 }
 
+function get_artifact_path() {
+  local config_path=$(get_common_config "artifactHome")
+  local artifact_path=$(replace_path "$config_path")
+  echo $artifact_path;
+}
+
 # Debug metadata status
 function debug_metadata_status() {
   info "Getting metadata from nexus: $METADATA_URL, status=$status, PACKAGE_VERSION=$PACKAGE_VERSION"
@@ -406,8 +417,9 @@ function init_config() {
 
 # Main logic processing
 main() {
-
-  if [ $(get_user) == "root" ]; then
+  local uname=$(get_user)
+  info "Running as user: $uname"
+  if [ "$uname" == "root" ]; then
     error "Cannot be run with root account."
     exit 1
   fi
@@ -417,6 +429,7 @@ main() {
 
   if [ $# -eq 0 ]; then
     show_help
+    exit 1
   fi
 
   DCOMMAND=""
@@ -471,7 +484,7 @@ main() {
       validate_service_name "$DSERVICE_NAME" || exit 1
       shift
       ;;
-    -rollback)
+    -rollback | -b)
       DCOMMAND="rollback"
       shift
       DSERVICE_NAME="$1"
@@ -488,7 +501,7 @@ main() {
       DHOST="$1"
       shift
       ;;
-    -instance)
+    -c)
       shift
       DINSTANCE="$1"
       shift

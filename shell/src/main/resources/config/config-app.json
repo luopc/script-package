@@ -1,5 +1,8 @@
 {
-  "templates": {
+  "common": {
+    "artifactHome": "{ROOT_PATH}/home/public/{USER_PATH}/repository/artifacts",
+    "logHome": "{ROOT_PATH}/home/public/{USER_PATH}/repository/logs",
+    "javaHome": "/opt/public/apps/jdk/current",
     "startSh": "/opt/$USER_PATH/script/common/current/service/start.sh",
     "stopSh": "/opt/$USER_PATH/script/common/current/service/stop.sh",
     "configTemplate": "/opt/$USER_PATH/script/common/current/service/application.properties.template"
@@ -8,7 +11,7 @@
     "script": {
       "initialBatch": 0,
       "language": "shell",
-      "path": "{ROOT_PATH}/public/{USER_PATH}/script",
+      "path": "{ROOT_PATH}/opt/{USER_PATH}/script",
       "groupId": "com.luopc.platform.script",
       "artifactId": "shell",
       "packageType": "tar.gz",
@@ -20,7 +23,7 @@
     "py": {
       "initialBatch": 0,
       "language": "python",
-      "path": "{ROOT_PATH}/public/{USER_PATH}/script",
+      "path": "{ROOT_PATH}/opt/{USER_PATH}/script",
       "groupId": "com.luopc.platform.script",
       "artifactId": "python",
       "packageType": "tar.gz",
@@ -32,7 +35,7 @@
     "tools": {
       "initialBatch": 0,
       "language": "python",
-      "path": "{ROOT_PATH}/public/{USER_PATH}/script",
+      "path": "{ROOT_PATH}/opt/public/apps",
       "groupId": "com.luopc.platform.script",
       "artifactId": "tools",
       "packageType": "tar.gz",
@@ -57,7 +60,7 @@
     "tcs": {
       "initialBatch": 0,
       "language": "java",
-      "path": "{ROOT_PATH}/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.trade",
       "artifactId": "trade-capture-service",
       "packageType": "jar",
@@ -70,7 +73,7 @@
     "redis": {
       "initialBatch": 0,
       "language": "tools",
-      "path": "{ROOT_PATH}/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.user",
       "artifactId": "user-service",
       "packageType": "tar.gz",
@@ -82,7 +85,7 @@
     "ods": {
       "initialBatch": 0,
       "language": "python",
-      "path": "{ROOT_PATH}/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.order",
       "artifactId": "order-service",
       "packageType": "tar.gz",
@@ -93,7 +96,7 @@
     "auth-service": {
       "initialBatch": 0,
       "language": "react",
-      "path": "{ROOT_PATH}/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.auth",
       "artifactId": "auth-service",
       "packageType": "jar",

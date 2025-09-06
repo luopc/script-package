@@ -11,7 +11,9 @@
     "home": ""
   },
   "common": {
-    "javaHome": "/usr/lib/jvm/java-11-openjdk"
+    "artifactHome": "{ROOT_PATH}/home/public/{USER_PATH}/repository/artifacts",
+    "logHome": "{ROOT_PATH}/home/public/{USER_PATH}/repository/logs",
+    "javaHome": "/opt/public/apps/jdk/current"
   },
   "uat": {
     "activeRegion": "BJ",
