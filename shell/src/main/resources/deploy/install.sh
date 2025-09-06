@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 INSTALL_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 source $INSTALL_DIR/../utils/common_util.sh
 source $INSTALL_DIR/../config/parser-app.sh
