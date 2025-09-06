@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.luopc.platform.script</groupId>
     <artifactId>script-package</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>Script Package</name>
     <modules>
@@ -60,6 +58,6 @@
         <url>https://gitee.com/luo_pc/script-package/</url>
         <connection>scm:git@github.com:luopc/script-package.git</connection>
         <developerConnection>scm:git:https://gitee.com/luo_pc/script-package.git</developerConnection>
-        <tag>{project.version}</tag>
+        <tag>v1.0.0</tag>
     </scm>
 </project>
