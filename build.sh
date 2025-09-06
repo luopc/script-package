@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# mvn versions:set -DoldVersion=* -DnewVersion=1.0.0-SNAPSHOT -DgenerateBackupPoms=false
 set -e
 
 BUILD_TYPE=$1
