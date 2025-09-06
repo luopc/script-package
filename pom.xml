@@ -8,7 +8,7 @@
     <artifactId>script-package</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Script Service</name>
+    <name>Script Package</name>
     <modules>
         <module>tools</module>
         <module>shell</module>
@@ -57,9 +57,9 @@
 
 
     <scm>
-        <url>https://gitee.com/luo_pc/script-service/</url>
-        <connection>scm:git@github.com:luopc/script-service.git</connection>
-        <developerConnection>scm:git:https://gitee.com/luo_pc/script-service.git</developerConnection>
+        <url>https://gitee.com/luo_pc/script-package/</url>
+        <connection>scm:git@github.com:luopc/script-package.git</connection>
+        <developerConnection>scm:git:https://gitee.com/luo_pc/script-package.git</developerConnection>
         <tag>{project.version}</tag>
     </scm>
 </project>
