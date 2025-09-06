@@ -1,0 +1,7 @@
+
+# 注释行，以#开头，不会被脚本处理
+# IP地址 用户名 端口 密码
+app-server user1 22 Robin2021
+data-server user2 22 Robin2021
+web-server user2 22 Robin2021
+core-server user2 22 Robin2021

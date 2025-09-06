@@ -1,0 +1,24 @@
+global: # 全局配置，配置发送邮件的信息
+  smtp_smarthost: smtp.qq.com:465       # 腾讯邮箱服务器及端口
+  smtp_from: 1234567890@qq.com # 用于发送告警的邮箱
+  smtp_auth_username: 1234567890@qq.com # 登录的邮箱名
+  smtp_auth_password: dydiacuvduanyqdi # 邮箱授权码，请登录用于发送的邮箱在设置→账户中开启
+  smtp_require_tls: false # 不启用TLS
+
+route: # 路由组配置
+  group_by: ['alertname'] # 分组依据，可分多个组
+  group_wait: 30s        # 第一次满足告警条件后等待多久发送邮件
+  group_interval: 50s    # 出现新告警后等待多久发送邮件
+  repeat_interval: 2h # 若已经成功发送邮件等待多久后再次发送
+  receiver: 'email'      # 定义收件组名称
+receivers: # 收件组配置
+- name: 'email'
+  email_configs:
+  - to: 987654321@qq.com # 收件人邮箱，可添加多个邮箱
+ ……
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']

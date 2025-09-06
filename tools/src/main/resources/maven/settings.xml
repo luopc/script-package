@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+    <!-- localRepository
+     | The path to the local repository maven will use to store artifacts.
+     |
+     | Default: ${user.home}/.m2/repository-->
+  <!--<localRepository>D:\dev-path\mvn-repository</localRepository> -->
+  <localRepository>/opt/public/build/repository</localRepository>
+    <pluginGroups>
+    </pluginGroups>
+
+    <proxies>
+
+    </proxies>
+
+    <servers>
+        <server>
+            <id>deploy-release</id>
+            <username>deploy</username>
+            <password>deploy</password>
+        </server>
+        <server>
+            <id>deploy-snapshot</id>
+            <username>deploy</username>
+            <password>deploy</password>
+        </server>
+    </servers>
+
+    <!--
+    <mirrors>
+      <mirror>
+        <id>alimaven</id>
+        <mirrorOf>central</mirrorOf>
+        <name>aliyun maven</name>
+        <url>http://maven.aliyun.com/nexus/content/repositories/central/</url>
+      </mirror>
+    </mirrors>
+    -->
+
+    <profiles>
+        <profile>
+            <id>tooling-repo</id>
+            <repositories>
+                <repository>
+                    <id>tooling-repo</id>
+                    <url>http://core-server.luopc.com:8082/nexus/repository/maven-public/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+        <profile>
+            <id>ali-maven</id>
+            <repositories>
+                <repository>
+                    <id>ali-maven</id>
+                    <url>https://maven.aliyun.com/repository/public</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+        <profile>
+            <id>ali-spring</id>
+            <repositories>
+                <repository>
+                    <id>spring</id>
+                    <url>https://maven.aliyun.com/repository/spring</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+        <profile>
+            <id>maven-central</id>
+            <repositories>
+                <repository>
+                    <id>maven-central</id>
+                    <url>http://central.maven.org/maven2/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
+    <activeProfiles>
+        <activeProfile>tooling-repo</activeProfile>
+        <activeProfile>ali-maven</activeProfile>
+        <activeProfile>ali-spring</activeProfile>
+        <activeProfile>maven-central</activeProfile>
+    </activeProfiles>
+
+</settings>

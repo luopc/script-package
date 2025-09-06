@@ -1,0 +1,12 @@
+#vim /etc/rc.d/rc.local
+#add /opt/robin/script/current/init/server-init.sh
+#/opt/robin/script/current/init/server-init.service
+[Unit]
+Description=server-init
+[Service]
+Type=simple
+User=robin
+ExecStart=/opt/robin/script/current/init/server-init.sh
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target

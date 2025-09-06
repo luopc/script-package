@@ -1,0 +1,11 @@
+#path
+[Unit]
+Description=node_exporter
+After=network.target
+[Service]
+Type=simple
+User=robin
+ExecStart=/opt/public/apps/node_exporter/start.sh
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,50 @@
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    static_configs:
+      - targets: [ "data-server.luopc.com:9090" ]
+        labels:
+          instance: data-server
+
+  - job_name: "victoria"
+    static_configs:
+      - targets: [ 'data-server.luopc.com:8428' ]
+
+  - job_name: "node"
+    static_configs:
+      - targets: [ "data-server.luopc.com:9100" ]
+        labels:
+          instance: data-server
+      - targets: [ 'core-server.luopc.com:9100' ]
+        labels:
+          instance: core-server
+      - targets: [ 'app-server.luopc.com:9100' ]
+        labels:
+          instance: app-server
+      - targets: [ 'web-server.luopc.com:9100' ]
+        labels:
+          instance: web-server
+
+  - job_name: "alert_manager"
+    static_configs:
+      - targets: [ "data-server.luopc.com:9093" ]
+        labels:
+          instance: data-server
+
+  - job_name: "auto-micrometer"
+    scrape_interval: 30s
+    metrics_path: '/actuator/prometheus'
+    basic_auth: # Spring Security basic auth
+      username: 'test'
+      password: 'test'
+    file_sd_configs:
+      - files:
+          - /opt/public/apps/prometheus/conf/static-*.json

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.luopc.platform.script</groupId>
+    <artifactId>script-package</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Script Service</name>
+    <description>Multi-module project for managing scripts and configurations</description>
+
+    <modules>
+        <module>tools</module>
+        <module>shell</module>
+        <module>python</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <nexus.url>https://lb.luopc.com/nexus/repository/maven-releases/</nexus.url>
+        <nexus.snapshots.url>https://lb.luopc.com/nexus/repository/maven-snapshots/</nexus.snapshots.url>
+    </properties>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>3.0.0-M7</version>
+                    <configuration>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <tagNameFormat>v@{project.version}</tagNameFormat>
+                        <generateReleasePoms>false</generateReleasePoms>
+                        <arguments>-DskipTests</arguments>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+
+    <distributionManagement>
+        <repository>
+            <id>deploy-release</id>
+            <name>Nexus Release Repository</name>
+            <layout>default</layout>
+            <url>${nexus.url}</url>
+        </repository>
+        <snapshotRepository>
+            <id>deploy-snapshot</id>
+            <name>Nexus Snapshot Repository</name>
+            <layout>default</layout>
+            <url>${nexus.snapshots.url}</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+
+    <scm>
+        <url>https://gitee.com/luo_pc/script-service/</url>
+        <connection>scm:git@github.com:luopc/script-service.git</connection>
+        <developerConnection>scm:git:https://gitee.com/luo_pc/script-service.git</developerConnection>
+        <tag>{project.version}</tag>
+    </scm>
+</project>

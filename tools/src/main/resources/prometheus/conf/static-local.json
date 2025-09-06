@@ -1,0 +1,9 @@
+[
+  {
+    "targets": ["192.168.3.120:8180"],
+    "labels": {
+      "app": "Micrometer-data",
+      "env": "uat"
+    }
+  }
+]

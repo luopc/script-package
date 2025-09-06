@@ -1,0 +1,74 @@
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+  external_labels:
+    datacenter: "dc-1"
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "data-server.luopc.com:9093"
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "example_rules.yml"
+# - "first_rules.yml"
+# - "second_rules.yml"
+
+remote_write: # 存储到远程VM存储
+  - url: http://data-server.luopc.com:8428/api/v1/write
+    queue_config: # 如果Prometheus抓取指标很大，可以加调整queue，但是会提高内存占用
+      max_samples_per_send: 10000
+      capacity: 20000
+      max_shards: 30
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    static_configs:
+      - targets: [ "data-server.luopc.com:9090" ]
+        labels:
+          instance: data-server
+
+  - job_name: "victoria"
+    static_configs:
+      - targets: [ 'data-server.luopc.com:8428' ]
+
+  - job_name: "node"
+    static_configs:
+      - targets: [ "data-server.luopc.com:9100" ]
+        labels:
+          instance: data-server
+      - targets: [ 'core-server.luopc.com:9100' ]
+        labels:
+          instance: core-server
+      - targets: [ 'app-server.luopc.com:9100' ]
+        labels:
+          instance: app-server
+      - targets: [ 'web-server.luopc.com:9100' ]
+        labels:
+          instance: web-server
+
+  - job_name: "alert_manager"
+    static_configs:
+      - targets: [ "data-server.luopc.com:9093" ]
+        labels:
+          instance: data-server
+
+  - job_name: "auto-micrometer"
+    scrape_interval: 30s
+    metrics_path: '/actuator/prometheus'
+    basic_auth: # Spring Security basic auth
+      username: 'test'
+      password: 'test'
+    file_sd_configs:
+      - files:
+          - /opt/public/apps/prometheus/conf/static-*.json

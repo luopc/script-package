@@ -1,0 +1,12 @@
+#/usr/lib/systemd/system/grafana.service
+[Unit]
+Description=grafana
+[Service]
+Type=simple
+User=robin
+ExecStart=/opt/public/apps/grafana/start.sh
+ExecReload=/bin/kill  -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target

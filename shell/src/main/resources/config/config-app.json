@@ -1,0 +1,81 @@
+{
+  "templates": {
+    "startSh": "/opt/$USER_PATH/script/common/current/service/start.sh",
+    "stopSh": "/opt/$USER_PATH/script/common/current/service/stop.sh",
+    "configTemplate": "/opt/$USER_PATH/script/common/current/service/application.properties.template"
+  },
+  "services": {
+    "script": {
+      "initialBatch": 0,
+      "language": "shell",
+      "path": "{ROOT_PATH}/opt/{USER_PATH}/script",
+      "groupId": "com.luopc.platform.script",
+      "artifactId": "shell",
+      "packageType": "tar.gz",
+      "port": 0,
+      "dependencies": [],
+      "containers": "all",
+      "activeRegion": "all"
+    },
+    "mds": {
+      "initialBatch": 0,
+      "language": "java",
+      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.cloud.service.trade",
+      "artifactId": "market-data-service",
+      "packageType": "jar",
+      "activeRegion": "HK",
+      "containers": "data, code",
+      "jvmOptions": "-Xmx512m -Xms256m",
+      "port": 0,
+      "dependencies": []
+    },
+    "tcs": {
+      "initialBatch": 0,
+      "language": "java",
+      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.cloud.service.trade",
+      "artifactId": "trade-capture-service",
+      "packageType": "jar",
+      "activeRegion": "BJ",
+      "containers": "data, code",
+      "jvmOptions": "-Xmx512m -Xms256m",
+      "port": 8084,
+      "dependencies": []
+    },
+    "redis": {
+      "initialBatch": 0,
+      "language": "tools",
+      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.cloud.service.user",
+      "artifactId": "user-service",
+      "packageType": "tar.gz",
+      "packageName": "redis",
+      "activeRegion": "London",
+      "containers": "data, code",
+      "dependencies": []
+    },
+    "ods": {
+      "initialBatch": 0,
+      "language": "python",
+      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.cloud.service.order",
+      "artifactId": "order-service",
+      "packageType": "tar.gz",
+      "activeRegion": "BJ",
+      "containers": "data, code",
+      "dependencies": []
+    },
+    "auth-service": {
+      "initialBatch": 0,
+      "language": "react",
+      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.cloud.service.auth",
+      "artifactId": "auth-service",
+      "packageType": "jar",
+      "activeRegion": "BJ",
+      "containers": "data, code",
+      "dependencies": []
+    }
+  }
+}

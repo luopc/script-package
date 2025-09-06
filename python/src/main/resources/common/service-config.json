@@ -1,0 +1,64 @@
+{
+  "templates": {
+    "startSh": "/opt/$USER_PATH/script/common/current/service/start.sh",
+    "stopSh": "/opt/$USER_PATH/script/common/current/service/stop.sh",
+    "configTemplate": "/opt/$USER_PATH/script/common/current/service/application.properties.template"
+  },
+  "services": {
+    "static-service": {
+      "initiatedBatch": 0,
+      "language": "java",
+      "path": "/opt/public/apps/",
+      "groupId": "com.luopc.platform.cloud.service.admin",
+      "artifactId": "static-service",
+      "packageType": "tar.gz",
+      "activeRegion": "HK",
+      "containers": "data.luopc.com;code.luopc.com",
+      "dependencies": []
+    },
+    "trade-capture-service": {
+      "initiatedBatch": 0,
+      "language": "java",
+      "path": "/opt/public/apps/",
+      "groupId": "com.luopc.platform.cloud.service.trade",
+      "artifactId": "trade-capture-service",
+      "packageType": "jar",
+      "activeRegion": "BJ",
+      "containers": "data.luopc.com;code.luopc.com",
+      "dependencies": []
+    },
+    "user-service": {
+      "initiatedBatch": 0,
+      "language": "java",
+      "path": "/opt/public/apps/",
+      "groupId": "com.luopc.platform.cloud.service.user",
+      "artifactId": "user-service",
+      "packageType": "jar",
+      "activeRegion": "London",
+      "containers": "data.luopc.com;code.luopc.com",
+      "dependencies": []
+    },
+    "order-service": {
+      "initiatedBatch": 0,
+      "language": "python",
+      "path": "/opt/public/apps/",
+      "groupId": "com.luopc.platform.cloud.service.order",
+      "artifactId": "order-service",
+      "packageType": "tar.gz",
+      "activeRegion": "BJ",
+      "containers": "data.luopc.com;code.luopc.com",
+      "dependencies": []
+    },
+    "auth-service": {
+      "initiatedBatch": 0,
+      "language": "react",
+      "path": "/opt/public/apps/",
+      "groupId": "com.luopc.platform.cloud.service.auth",
+      "artifactId": "auth-service",
+      "packageType": "jar",
+      "activeRegion": "BJ",
+      "containers": "data.luopc.com;code.luopc.com",
+      "dependencies": []
+    }
+  }
+}

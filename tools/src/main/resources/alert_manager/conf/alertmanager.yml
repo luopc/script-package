@@ -1,0 +1,25 @@
+global:
+  resolve_timeout: 5m
+  # smtp配置 gngcopdjumrtbdge
+  smtp_from: "740461041@qq.com"
+  smtp_smarthost: 'smtp.qq.com:465'
+  smtp_auth_username: "740461041@qq.com"
+  smtp_auth_password: "gngcopdjumrtbdge"
+  smtp_require_tls: false
+route:
+  group_by: [ 'alert_name' ]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h
+  receiver: 'team-X-mails'
+receivers:
+  - name: 'team-X-mails'
+    email_configs:
+      - to: 'chengfeng00357@163.com'
+        send_resolved: true
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: [ 'alertname', 'dev', 'instance' ]
