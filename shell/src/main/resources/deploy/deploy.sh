@@ -529,7 +529,7 @@ main() {
     show_help >&2
     exit 1
   fi
-
+  print_header
   # Parse host list
   # Create temporary file
   TEMP_DIR=$(mk_temp "$(getRootPath)/tmp")
@@ -586,11 +586,33 @@ main() {
     exit 1
     ;;
   esac
-
+  print_footer
   if [[ -d $TEMP_DIR ]]; then
     rm -rf $TEMP_DIR
   fi
   exit 0
+}
+
+function deploy_path() {
+  local package_path=$(get_service_config "$DSERVICE_NAME" "path")
+  local artifactId=$(get_service_config "$DSERVICE_NAME" "artifactId")
+  local target_dir=$(replace_path "${package_path}")
+  echo "$target_dir/$artifactId"
+}
+
+function print_header() {
+  echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
+  echo -e "${GREEN}|    APPLICATION:         ${DSERVICE_NAME:-$DCOMMAND}                                   "
+  echo -e "${GREEN}|    APPLICATION_VERSION: $DVERSION                                                   "
+  echo -e "${NC}+-----------------------------------------------------------------------------------+"
+}
+
+function print_footer() {
+  echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
+  echo -e "${GREEN}|    APPLICATION:         ${DSERVICE_NAME:-$DCOMMAND}                                "
+  echo -e "${GREEN}|    APPLICATION_PATH:    $(deploy_path)                                              "
+  echo -e "${GREEN}|    APPLICATION_VERSION: $DEPLOY_VERSION                                            "
+  echo -e "${NC}+-----------------------------------------------------------------------------------+"
 }
 
 # Start main logic

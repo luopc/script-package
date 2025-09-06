@@ -120,19 +120,17 @@ function process_package_file() {
         return 1
       fi
 
-      debug "Created temporary directory: $temp_dir"
-
       # Extract based on file type
       local extract_success=false
       case "$app_type" in
         tar|tgz|tar.gz)
-          info "Extracting tar format file to temporary directory"
+          info "Extracting tar format file to temporary directory: $temp_dir"
           if tar -zxf "$input_path" -C "$temp_dir" 2>/dev/null; then
             extract_success=true
           fi
           ;;
         zip)
-          info "Extracting zip format file to temporary directory"
+          info "Extracting zip format file to temporary directory: $temp_dir"
           if command -v unzip >/dev/null 2>&1; then
             if unzip -q "$input_path" -d "$temp_dir" 2>/dev/null; then
               extract_success=true
@@ -142,7 +140,7 @@ function process_package_file() {
           fi
           ;;
         gz)
-          info "Extracting gz format file to temporary directory"
+          info "Extracting gz format file to temporary directory: $temp_dir"
           local base_name
           base_name=$(basename "$input_path" .gz)
           if gunzip -c "$input_path" > "$temp_dir/$base_name" 2>/dev/null; then
@@ -427,7 +425,9 @@ function info() {
 }
 
 function debug() {
-    log_message "DEBUG" "${BLUE}" "$1"
+  if [[ "$(uname -s)" == CYGWIN* || "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
+    log_message "DEBUG" "${GREEN}" "$1"
+  fi
 }
 
 function warn() {

@@ -106,7 +106,6 @@ handle_script() {
   local package_path=$(get_service_config "$serviceName" "path")
   local artifactId=$(get_service_config "$serviceName" "artifactId")
   local packageType=$(get_service_config "$serviceName" "packageType")
-  info "package_path=${package_path}"
 
   # Base path template
   local target_dir=$(replace_path "${package_path}")
