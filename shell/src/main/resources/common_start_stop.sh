@@ -20,7 +20,7 @@ function show_help() {
   echo "+-----------------------------------------------------------------------+"
   echo "|     This is an application running script...                          |"
   echo "|     deploy apps     :     deploy -p $APP_NAME -v <version>            |"
-  echo "|     deploy component:     deploy -d $APP_NAME -v <version>            |"
+  echo "|     deploy component:     deploy -i $APP_NAME -v <version>            |"
   echo "|     start-script    :     ./run.sh start                              |"
   echo "|     stop-script     :     ./run.sh stop                               |"
   echo "|     restart-script  :     ./run.sh restart                            |"

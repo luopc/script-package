@@ -44,6 +44,18 @@
       "containers": "all",
       "activeRegion": "all"
     },
+    "redis": {
+      "initialBatch": 0,
+      "language": "tools",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/tools",
+      "groupId": "com.luopc.platform.script",
+      "artifactId": "tools",
+      "packageType": "tar.gz",
+      "packageName": "redis",
+      "activeRegion": "London",
+      "containers": "data, code",
+      "dependencies": []
+    },
     "mds": {
       "initialBatch": 0,
       "language": "java",
@@ -70,18 +82,6 @@
       "port": 8084,
       "dependencies": []
     },
-    "redis": {
-      "initialBatch": 0,
-      "language": "tools",
-      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
-      "groupId": "com.luopc.platform.cloud.service.user",
-      "artifactId": "user-service",
-      "packageType": "tar.gz",
-      "packageName": "redis",
-      "activeRegion": "London",
-      "containers": "data, code",
-      "dependencies": []
-    },
     "ods": {
       "initialBatch": 0,
       "language": "python",
@@ -95,7 +95,7 @@
     },
     "auth-service": {
       "initialBatch": 0,
-      "language": "react",
+      "language": "nodejs",
       "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.auth",
       "artifactId": "auth-service",

@@ -50,24 +50,47 @@ EOF
 
 function deploy_script() {
   info "going to deploy script to version [$DVERSION], hostName[$DHOST]"
+  validate_service_name "$DSERVICE_NAME" || exit 1
+
   retrieve_version_from_meta $DSERVICE_NAME $DVERSION
-
   download_package_from_nexus $DSERVICE_NAME
+  copy_install
+}
 
+function init_service(){
+  DHOST="${DHOST:-$(HOSTNAME)}"
+  info "going to init component[$DSERVICE_NAME] to version [$DVERSION], hostName=$DHOST"
+  validate_service_name "$DSERVICE_NAME" || exit 1
+
+  retrieve_version_from_meta "tools" $DVERSION
+  download_package_from_nexus "tools"
+  copy_install
+}
+
+function deploy_tools(){
+  DHOST="${DHOST:-$(HOSTNAME)}"
+  info "going to init component[$DSERVICE_NAME] to version [$DVERSION], hostName=$DHOST"
+  validate_service_name "$DSERVICE_NAME" || exit 1
+
+  retrieve_version_from_meta "tools" $DVERSION
+  download_package_from_nexus "tools"
   copy_install
 }
 
 function deploy_package() {
   info "going to deploy component[$DSERVICE_NAME] to version [$DVERSION], hostName=$DHOST"
+  validate_service_name "$DSERVICE_NAME" || exit 1
   retrieve_version_from_meta $DSERVICE_NAME $DVERSION
-
   download_package_from_nexus $DSERVICE_NAME
-
   copy_install
 }
 
+function rollback_package() {
+  info "going to rollback component[$DSERVICE_NAME] to version [$DVERSION], hostName=$DHOST"
+}
+
 check_service_status() {
-  info "checking [$1] status on host[$2]"
+  info "checking [$DSERVICE_NAME] status on host[$DHOST]"
 }
 
 # Validate if service name is valid
@@ -148,12 +171,15 @@ function scp_package() {
 
     debug "command: timeout 60 ssh -q $(getUser)@$deployHost 'mkdir -p $repo'"
     debug "command: $deploy_package $(getUser)@$deployHost:$repo"
+
+    info "Copy package to remote repository: "
   else
     mkdir -p $repo
     cp -f $deploy_package $repo
-  fi
 
-  info "Copy package to remote repository: "
+    debug "command: cp -f $deploy_package $repo"
+    info "Copy package to repository: "
+  fi
   info "     package=$deploy_package"
   info "     repository=$(getUser)@$deployHost:$repo"
   info "     repository file=$(getUser)@$deployHost:$REPO_FILE"
@@ -467,28 +493,24 @@ main() {
       DCOMMAND="init"
       shift
       DSERVICE_NAME="$1"
-      validate_service_name "$DSERVICE_NAME" || exit 1
       shift
       ;;
     -tools | -t)
       DCOMMAND="tools"
       shift
       DSERVICE_NAME="$1"
-      validate_service_name "$DSERVICE_NAME" || exit 1
       shift
       ;;
     -package | -p)
       DCOMMAND="package"
       shift
       DSERVICE_NAME="$1"
-      validate_service_name "$DSERVICE_NAME" || exit 1
       shift
       ;;
     -rollback | -b)
       DCOMMAND="rollback"
       shift
       DSERVICE_NAME="$1"
-      validate_service_name "$DSERVICE_NAME" || exit 1
       shift
       ;;
     -v)
@@ -542,7 +564,7 @@ main() {
     list_services
     ;;
   status)
-    check_service_status $DSERVICE_NAME $DHOST
+    check_service_status
     ;;
   script)
     info "Executing deployment script:"
@@ -550,36 +572,28 @@ main() {
     ;;
   init)
     info "Initializing service $DSERVICE_NAME:"
-    info "  Target hosts: $host_list"
-    # In actual implementation, real initialization operations should be executed
     info "  Service initialization completed"
+    init_service
     ;;
   tools)
     info "Deploying tools to service $DSERVICE_NAME:"
-    info "  Target hosts: $host_list"
-    # In actual implementation, real tool deployment should be executed
-    info "  Tool deployment completed"
+    deploy_tools
     ;;
   package)
     info "Packaging service $DSERVICE_NAME:"
-    [ -n "$DVERSION" ] && echo "  Version: $DVERSION"
+    [ -n "$DVERSION" ] && info "  Version: $DVERSION"
     info "  Instance: $DINSTANCE"
     info "  Group: $DGROUP"
-    info "  Target hosts: $host_list"
-    [ $DRESTART -eq 1 ] && echo "  Restart after operation: Yes"
-    # In actual implementation, real packaging operations should be executed
+    [ $DRESTART -eq 1 ] && info "  Restart after operation: Yes"
     deploy_package
     info "  Service packaging completed"
     ;;
   rollback)
     info "Rolling back service $DSERVICE_NAME:"
-    [ -n "$DVERSION" ] && echo "  Rollback to version: $DVERSION"
+    [ -n "$DVERSION" ] && info "  Rollback to version: $DVERSION"
     info "  Instance: $DINSTANCE"
     info "  Group: $DGROUP"
-    info "  Target hosts: $host_list"
-    [ $DRESTART -eq 1 ] && echo "  Restart after operation: Yes"
-    # In actual implementation, real rollback operations should be executed
-    info "  Service rollback completed"
+    rollback_service
     ;;
   *)
     error "Error: Unknown command $DCOMMAND" >&2

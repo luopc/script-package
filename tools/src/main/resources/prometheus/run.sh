@@ -1,5 +1,5 @@
 #!/bin/bash
-. /opt/$USER/script/current/common.sh
+. /opt/$USER/script/shell/current/common_start_stop.sh
 
 #监控mysql:
 # CREATE USER 'exporter'@'localhost' IDENTIFIED BY 'password' WITH MAX_USER_CONNECTIONS 3;

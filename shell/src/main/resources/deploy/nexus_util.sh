@@ -77,5 +77,6 @@ function pull_from_nexus() {
     wget --timeout=3000 --tries=3 -nv --show-progress -O "$out_put" "$download_path"
   fi
   info "-----------------------------------end-----------------------------------------------"
+  sleep 1s
   return 0
 }

@@ -1,5 +1,5 @@
 #!/bin/bash
-. /opt/$USER/script/current/common.sh
+. /opt/$USER/script/shell/current/common_start_stop.sh
 
 #$APP_HOME/current/bin/pg_ctl -D $APP_HOME/data/ -l logfile start（启动数据库）
 #$APP_HOME/current/bin/pg_ctl -D $APP_HOME/data/ stop            （停止数据库）

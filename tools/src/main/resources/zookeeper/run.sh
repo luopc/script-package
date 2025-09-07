@@ -1,5 +1,5 @@
 #!/bin/bash
-. /opt/$USER/script/current/common.sh
+. /opt/$USER/script/shell/current/common_start_stop.sh
 
 STAR_CMD="$APP_HOME/current/bin/zkServer.sh start $APP_HOME/conf/zoo.cfg"
 STOP_CMD="$APP_HOME/current/bin/zkServer.sh stop"

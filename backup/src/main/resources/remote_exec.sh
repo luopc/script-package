@@ -3,7 +3,7 @@
 # 接收所有传入的参数作为需要远程执行的命令
 COMMAND=$*
 # 主机信息文件，记录着每台主机的IP、用户名、端口和密码
-HOST_INFO=host.info
+HOST_INFO=../../../../backup/src/main/resources/host.info
 # 遍历host.info文件中的每一行，提取IP地址
 for IP in $(awk '/^[^#]/{print $1}' $HOST_INFO); do
     # 根据IP地址从host.info文件中提取对应的用户名
