@@ -47,7 +47,7 @@ Option descriptions:
   -r              Restart service after operation
 EOF
 }
-# deploy script
+# deploy script to server
 function deploy_script() {
   info "going to deploy script to version [$DVERSION], hostName[$DHOST]"
   validate_service_name "$DSERVICE_NAME" || exit 1
