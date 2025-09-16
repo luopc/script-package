@@ -64,7 +64,7 @@ if [ "$BUILD_TYPE" = "release" ]; then
   else
     echo -e "${YELLOW}No changes detected, skipping commit${NC}"
   fi
-
+  VERSION=$(mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive org.codehaus.mojo:exec-maven-plugin:1.6.0:exec | awk -v FS="-" '{print $1}')
   # 执行发布
   echo -e "${GREEN}Starting release build${NC}"
   if ! mvn -B clean release:prepare-with-pom release:perform \
@@ -73,8 +73,8 @@ if [ "$BUILD_TYPE" = "release" ]; then
     echo -e "${RED}Error: Release build failed${NC}"
     exit 1
   fi
-  VERSION=$(mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive org.codehaus.mojo:exec-maven-plugin:1.6.0:exec | awk -v FS="-" '{print $1}')
-  echo "current version is $VERSION"
+  echo -e "${YELLOW}[INFO] released version is $VERSION ${NC}"
+  echo -e "${GREEN}deploy -s -v $VERSION ${NC}"
 elif [ "$BUILD_TYPE" = "snapshot" ]; then
   echo -e "${GREEN}Building Snapshot Version${NC}"
 
@@ -85,7 +85,8 @@ elif [ "$BUILD_TYPE" = "snapshot" ]; then
   fi
 
   VERSION=$(mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive org.codehaus.mojo:exec-maven-plugin:1.6.0:exec)
-  echo "current version is $VERSION"
+  echo -e "${YELLOW}[INFO] current version is $VERSION ${NC}"
+  echo -e "${GREEN}deploy -s -v $VERSION ${NC}"
 else
   echo -e "${RED}Error: Invalid build type '$BUILD_TYPE'${NC}"
   usage
