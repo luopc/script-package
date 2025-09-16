@@ -92,3 +92,5 @@ else
   usage
 fi
 
+rm -rf target
+
