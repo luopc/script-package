@@ -100,7 +100,7 @@ show_params() {
 }
 
 # Handle script type
-handle_script() {
+function handle_script() {
   info "===== Executing script installation ====="
   # Get package information
   local package_path=$(get_service_config "$serviceName" "path")
@@ -127,26 +127,55 @@ handle_script() {
 }
 
 # Handle init type
-handle_init() {
+function handle_init() {
   info "===== Executing init installation ====="
-  target_dir="/usr/local/services/$serviceName/$group/$instance/init"
-  create_target_dir "$target_dir"
 
-  # Copy file
-  cp "$resourcePath" "$target_dir/" || {
-    info "Error: File copy failed" >&2
-    exit 1
-  }
+  local language=$(get_service_config "$serviceName" "language" "unknown")
+  local package_path=$(get_service_config "$serviceName" "path")
+  local artifactId=$(get_service_config "$serviceName" "artifactId")
+  local artifactSuffix=$(get_service_config "$serviceName" "packageType")
+  local packageType=$(get_service_config "$serviceName" "packageType")
+  local packageName=$(get_service_config "$serviceName" "packageName")
+  info "package_path=${package_path}"
 
-  # Record version information
-  if [ -n "$version" ]; then
-    info "$version" > "$target_dir/init_version.txt"
+  local target_dir="$TEMP_OUTPUT"
+  if [ -d $target_dir ]; then
+    process_package_file "tar.gz" $resourcePath "$TEMP_OUTPUT" "$artifactId"
+  else
+    error "package hasn't been initialized yet, please check you resource file. path=$target_dir"
   fi
-  info "Initialization package installed to: $target_dir"
+
+  local output_dir=$(replace_path "${package_path}")
+  if [[ "$language" == "java" ]]; then
+    target_dir="$target_dir/$artifactId/java"
+    output_dir="$output_dir/$serviceName"_"$instance"_"$group"
+  elif [[ "$language" == "tools" ]]; then
+    target_dir="$target_dir/$artifactId/$packageName"
+    output_dir="$output_dir/$serviceName"
+  else
+    error "Error: Unsupported language type: $language" >&2
+    exit 1
+  fi
+
+  info "output_dir=${output_dir}"
+  create_target_dir "$output_dir"
+
+  info "Copying files from :$target_dir"
+  info "Copying files to   :$output_dir"
+
+  if [[ -d $target_dir && -d $output_dir ]]; then
+    process_package_file "file" "$target_dir/*" "$output_dir/"
+  else
+    error "package hasn't been initialized yet, please check you resource file. path=$output_dir"
+  fi
+
+  init_logDir $output_dir
+  update_profile $output_dir
+  info "Initialization package installed to: $output_dir"
 }
 
 # Handle package type
-handle_package() {
+function handle_package() {
   info "===== Executing package installation ====="
   local package_path=$(get_service_config "$serviceName" "path")
   local artifactId=$(get_service_config "$serviceName" "artifactId")
@@ -156,17 +185,17 @@ handle_package() {
 
   # Base path template
   local target_dir=$(replace_path "${package_path}")
-  target_dir="$target_dir/$artifactId"_"$instance"_"$group"
+  target_dir="$target_dir/$serviceName"_"$instance"_"$group"
   info "target_dir=${target_dir}"
 
-  create_target_dir "$target_dir"
   if [ -d $target_dir ]; then
+    create_target_dir "$target_dir/version/$version"
     process_package_file "${packageType}" $resourcePath "$target_dir/version/$version" "$artifactId.$artifactSuffix"
     update_soft_link "$target_dir" "version/$version"
+    restart_service "$target_dir"
   else
-    error "package hasn't been initialized yet, please check you resource file. path=$target_dir"
+    warn "package hasn't been initialized yet, please check you resource file. path=$target_dir"
   fi
-
   info "Package installed to: $target_dir"
 }
 
@@ -220,11 +249,11 @@ handle_rollback() {
 restart_service() {
   if [ "$restart" -eq 1 ]; then
     info "===== Executing service restart ====="
-    service_path="/usr/local/services/$serviceName/$group/$instance"
+    local service_path=$1
 
     # Try to execute restart script
-    if [ -f "$service_path/bin/restart.sh" ]; then
-      "$service_path/bin/restart.sh" || {
+    if [ -f "$service_path/restart.sh" ]; then
+      "$service_path/restart.sh" || {
         info "Warning: Restart script execution failed, attempting manual restart"
         manual_restart
       }
@@ -232,6 +261,159 @@ restart_service() {
       manual_restart
     fi
   fi
+}
+
+function init_logDir() { 
+  local appHome=$1
+  local logHome=$(get_common_config "logHome")
+  logHome=$(replace_path "$logHome")
+  info "logHome=$logHome"
+  
+  local log_dir="$logHome/$(serviceName)"
+  if [ ! -d "$log_dir" ]; then
+    mkdir -p "$log_dir"
+  fi
+
+  local original_pwd="$PWD"
+  if ! cd "$appHome"; then
+    error "Failed to change to application directory: $appHome"
+    return 1
+  fi
+
+  
+  # Create new symbolic link
+  info "Creating new symbolic link: logs -> $log_dir"
+  if ! ln -sf "$log_dir" "logs"; then
+    error "Failed to create symbolic link: logs -> $log_dir"
+    cd "$original_pwd"
+    return 1
+  fi
+
+  # Verify the symbolic link was created correctly
+  if [[ -L "logs" ]]; then
+    local link_target
+    link_target="$(readlink "logs")"
+    if [[ "$link_target" == "$log_dir" ]]; then
+      info "Successfully created symbolic link: logs -> $link_target"
+    else
+      warn "Symbolic link target mismatch. Expected: $log_dir, Actual: $link_target"
+    fi
+  else
+    error "Failed to verify symbolic link creation"
+    cd "$original_pwd"
+    return 1
+  fi
+
+  # Return to original directory
+  cd "$original_pwd"
+  debug "Returned to original directory: $original_pwd"
+  info "Initialized log directory: $log_dir"
+}
+
+
+##status=1(INSTANCE SHOULD START)status=0(INSTANCE SHOUT NOT START)
+#export CURRENT_STATUS=1
+#export CURRENT_INSTANCE=primary
+#export CURRENT_GROUP=default
+#export ARTIFACT_GROUP_ID=com.luopc.spring.learn.springboot
+#export ARTIFACT_ID=spring-boot-micrometer
+#export ARTIFACT_SUFFIX=.jar
+function update_profile() {
+  local APP_HOME="$1"
+
+  if [[ "$(uname -s)" == "Linux"* ]]; then
+    timeout 120 ssh -q $(getUser)@$HOSTNAME ". ~/.bash_profile; cd $APP_HOME; chmod 750 *.sh"
+    debug "command: timeout 120 ssh -q $(getUser)@$HOSTNAME '. ~/.bash_profile; cd $APP_HOME; chmod 750 *.sh' "
+  fi
+
+  local profile_file="$APP_HOME/instance.profile"
+  local backup_file="$APP_HOME/instance.profile.backup.$(date +%Y%m%d_%H%M%S)"
+
+  # Validate input parameters
+  if [[ -z "$APP_HOME" ]]; then
+    error "Error: APP_HOME parameter is required for update_profile function"
+    return 1
+  fi
+
+  if [[ ! -d "$APP_HOME" ]]; then
+    error "Error: APP_HOME directory does not exist: $APP_HOME"
+    return 1
+  fi
+
+  # Get service configuration with error handling
+  local language groupId artifactId artifactSuffix
+  language=$(get_service_config "$serviceName" "language" "unknown")
+  groupId=$(get_service_config "$serviceName" "groupId")
+  artifactId=$(get_service_config "$serviceName" "artifactId")
+  artifactSuffix=$(get_service_config "$serviceName" "packageType")
+
+  # Validate required configuration values
+  if [[ -z "$groupId" || -z "$artifactId" ]]; then
+    error "Error: Missing required service configuration (groupId or artifactId) for service: $serviceName"
+    return 1
+  fi
+
+  info "Updating instance profile: $profile_file"
+
+  # Create backup of existing profile if it exists
+  if [[ -f "$profile_file" ]]; then
+    info "Creating backup of existing profile: $backup_file"
+    if ! cp "$profile_file" "$backup_file"; then
+      error "Error: Failed to create backup of instance profile"
+      return 1
+    fi
+  fi
+
+  # Generate profile content in a single operation
+  local profile_content
+  profile_content=$(cat << EOF
+# Instance Profile - Generated on $(date)
+# Service: $serviceName, Instance: ${instance:-primary}, Group: ${group:-default}
+export CURRENT_STATUS=1
+export CURRENT_APP="${serviceName}"
+export CURRENT_INSTANCE="${instance:-primary}"
+export CURRENT_GROUP="${group:-default}"
+export ARTIFACT_GROUP_ID="${groupId}"
+export ARTIFACT_ID="${artifactId}"
+export LANGUAGE="${language}"
+export ARTIFACT_SUFFIX="${artifactSuffix}"
+# Profile generated by install.sh at $(date +'%Y-%m-%d %H:%M:%S')
+EOF
+)
+
+  # Write profile content atomically
+  if ! echo "$profile_content" > "$profile_file"; then
+    error "Error: Failed to write instance profile to $profile_file"
+    # Restore backup if write failed and backup exists
+    if [[ -f "$backup_file" ]]; then
+      warn "Attempting to restore backup profile"
+      cp "$backup_file" "$profile_file" || error "Error: Failed to restore backup profile"
+    fi
+    return 1
+  fi
+
+  # Verify the profile was written correctly
+  if [[ ! -f "$profile_file" ]] || [[ ! -s "$profile_file" ]]; then
+    error "Error: Profile file verification failed - file is missing or empty"
+    return 1
+  fi
+
+  # Set appropriate permissions
+  chmod 644 "$profile_file" 2>/dev/null || warn "Warning: Could not set profile file permissions"
+
+  # Clean up old backup files (keep only last 5)
+  find "$APP_HOME" -name "instance.profile.backup.*" -type f 2>/dev/null | \
+    sort -r | tail -n +6 | xargs rm -f 2>/dev/null || true
+
+  info "Instance profile updated successfully"
+  debug "Profile location: $profile_file"
+  debug "Profile content preview:"
+  debug "  CURRENT_APP: ${serviceName}"
+  debug "  CURRENT_INSTANCE: ${instance:-primary}"
+  debug "  CURRENT_GROUP: ${group:-default}"
+  debug "  ARTIFACT_ID: ${artifactId}"
+
+  return 0
 }
 
 # Manual service restart
@@ -291,9 +473,6 @@ main() {
     exit 1
     ;;
   esac
-
-  # Handle restart
-  restart_service
 
   info "===== Operation completed ====="
 }

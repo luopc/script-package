@@ -551,7 +551,7 @@ main() {
     show_help >&2
     exit 1
   fi
-  print_header
+
   # Parse host list
   # Create temporary file
   TEMP_DIR=$(mk_temp "$(getRootPath)/tmp")
@@ -567,19 +567,26 @@ main() {
     check_service_status
     ;;
   script)
+    print_header
     info "Executing deployment script:"
     deploy_script
+    print_footer
     ;;
   init)
+    print_header
     info "Initializing service $DSERVICE_NAME:"
     info "  Service initialization completed"
     init_service
+    print_footer
     ;;
   tools)
+    print_header
     info "Deploying tools to service $DSERVICE_NAME:"
     deploy_tools
+    print_footer
     ;;
   package)
+    print_header
     info "Packaging service $DSERVICE_NAME:"
     [ -n "$DVERSION" ] && info "  Version: $DVERSION"
     info "  Instance: $DINSTANCE"
@@ -587,20 +594,22 @@ main() {
     [ $DRESTART -eq 1 ] && info "  Restart after operation: Yes"
     deploy_package
     info "  Service packaging completed"
+    print_footer
     ;;
   rollback)
+    print_header
     info "Rolling back service $DSERVICE_NAME:"
     [ -n "$DVERSION" ] && info "  Rollback to version: $DVERSION"
     info "  Instance: $DINSTANCE"
     info "  Group: $DGROUP"
     rollback_service
+    print_footer
     ;;
   *)
     error "Error: Unknown command $DCOMMAND" >&2
     exit 1
     ;;
   esac
-  print_footer
   if [[ -d $TEMP_DIR ]]; then
     rm -rf $TEMP_DIR
   fi
@@ -618,7 +627,7 @@ function print_header() {
   echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
   echo -e "${GREEN}|    APPLICATION:         ${DSERVICE_NAME:-$DCOMMAND}                                   "
   echo -e "${GREEN}|    APPLICATION_VERSION: $DVERSION                                                   "
-  echo -e "${NC}+-----------------------------------------------------------------------------------+"
+  echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
 }
 
 function print_footer() {
@@ -626,7 +635,7 @@ function print_footer() {
   echo -e "${GREEN}|    APPLICATION:         ${DSERVICE_NAME:-$DCOMMAND}                                "
   echo -e "${GREEN}|    APPLICATION_PATH:    $(deploy_path)                                              "
   echo -e "${GREEN}|    APPLICATION_VERSION: $DEPLOY_VERSION                                            "
-  echo -e "${NC}+-----------------------------------------------------------------------------------+"
+  echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
 }
 
 # Start main logic

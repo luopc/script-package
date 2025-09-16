@@ -87,12 +87,12 @@ function process_package_file() {
 
   case $app_type in
     file)
-      info "Copying configuration file: $input_path -> $output_path"
-      cp -rf "$input_path" "$output_path" || {
-        error "Failed to copy configuration file"
+      info "Moving configuration file: $input_path -> $output_path"
+      mv $input_path $output_path || {
+        error "Failed to move configuration file"
         return 1
       }
-      debug "Executed command: cp -rf '$input_path' '$output_path'"
+      debug "Executed command: mv '$input_path' '$output_path'"
       ;;
     jar)
       local dest_path="$output_path/${file_name:-$(basename "$input_path")}"
@@ -101,7 +101,7 @@ function process_package_file() {
         error "Failed to copy JAR file"
         return 1
       }
-      debug "Executed command: cp -rf '$input_path' '$dest_path'"
+      debug "Executed command: cp -rf '$input_path' '$dest_path' "
       ;;
     tar|zip|gz|tgz|tar.gz)
       # Validate if input file exists
@@ -412,8 +412,8 @@ function clean_text() {
 # Unified log format function
 function log_message() {
     local level=$1
-    local color=$2
-    local message=$3
+    local message=$2
+    local color=$3
     local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
     local user=$(getUser)
 
@@ -421,33 +421,35 @@ function log_message() {
 }
 
 function info() {
-    log_message "INFO" "${NC}" "$1"
+    log_message "INFO" "$1" "${NC}"
 }
 
 function debug() {
   if [[ "$(uname -s)" == CYGWIN* || "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
-    log_message "DEBUG" "${GREEN}" "$1"
+    log_message "DEBUG" "$1" "${BLUE}"
+  else
+    log_message "DEBUG" "$1" "${CYAN}"
   fi
 }
 
 function warn() {
-  log_message "WARN" "${YELLOW}" "$1"
+  log_message "WARN" "$1" "${YELLOW}"
 }
 
 function error() {
-  log_message "ERROR" "${RED}" "$1"
+  log_message "ERROR" "$1" "${RED}"
 }
 
 function green_line() {
-  log_message "INFO" "${GREEN}" "$1"
+  log_message "INFO" "$1" "${GREEN}"
 }
 
 function white_line() {
-  log_message "INFO" "${WHITE}" "$1"
+  log_message "INFO" "$1" "${WHITE}"
 }
 
 function cyan_line() {
-  log_message "INFO" "${CYAN}" "$1"
+  log_message "INFO" "$1" "${CYAN}"
 }
 
 function replace_path(){
@@ -526,7 +528,7 @@ function get_root_path() {
       root_path="/usr/local"
       ;;
     CYGWIN*|MINGW*|MSYS*)
-      root_path="/c/opt"
+      root_path="/c"
       ;;
     *)
       root_path="/tmp"

@@ -9,9 +9,10 @@ LOG_DATE=$(date +%y%m%d-%H%M%S)
 LOG_PATH=$APP_HOME/logs
 LOG_NAME=${APP_NAME:-default}.console-$LOG_DATE.log
 LOG_FILE=$LOG_PATH/$LOG_NAME
+PID_FILE="$APP_HOME/current/${APP_NAME:-default}.pid"
 
 JAVA_OPTS="-Xms128m -Xmx512m -Dspring.profiles.active=${USER} -Denv=${USER}"
-JAR_FILE=$APP_HOME/current/$ARTIFACT_ID$ARTIFACT_SUFFIX
+JAR_FILE=$APP_HOME/current/$ARTIFACT_ID.$ARTIFACT_SUFFIX
 
 PID_CMD="ps -ef|grep apps|grep $USER|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
 STAR_CMD="java -jar $JAVA_OPTS $JAR_FILE"
@@ -33,6 +34,8 @@ function go_to_start() {
   green_line ">>> nohup $STAR_CMD >> $LOG_FILE &"
   #-server.port=8081
   nohup $STAR_CMD >>$LOG_FILE 2>&1 &
+  # Save PID
+  echo $! > "$PID_FILE"
 }
 
 function start() {
@@ -76,7 +79,8 @@ function start() {
 
 function stop() {
   PVERSION=$(query_version)
-  debug "APP_HOME = $APP_HOME, running version = $PVERSION"
+  PID=$(cat "$PID_FILE")
+  debug "APP_HOME = $APP_HOME, running version = $PVERSION, PID = $PID"
 
   if [[ $STOP_CMD ]]; then
     info "going to stop APP[$APP_NAME]"
@@ -112,6 +116,8 @@ function stop() {
   else
     info "Stop Success!"
   fi
+
+  rm -f "$PID_FILE"
 }
 
 function restart() {

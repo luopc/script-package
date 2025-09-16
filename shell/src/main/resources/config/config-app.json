@@ -1,7 +1,7 @@
 {
   "common": {
     "artifactHome": "{ROOT_PATH}/home/public/{USER_PATH}/repository/artifacts",
-    "logHome": "{ROOT_PATH}/home/public/{USER_PATH}/repository/logs",
+    "logHome": "{ROOT_PATH}/home/public/{USER_PATH}/logs",
     "javaHome": "/opt/public/apps/jdk/current",
     "startSh": "/opt/$USER_PATH/script/common/current/service/start.sh",
     "stopSh": "/opt/$USER_PATH/script/common/current/service/stop.sh",
@@ -44,14 +44,26 @@
       "containers": "all",
       "activeRegion": "all"
     },
-    "redis": {
+    "redis_70": {
       "initialBatch": 0,
       "language": "tools",
       "path": "{ROOT_PATH}/home/public/{USER_PATH}/tools",
       "groupId": "com.luopc.platform.script",
       "artifactId": "tools",
       "packageType": "tar.gz",
-      "packageName": "redis",
+      "packageName": "redis_7070",
+      "activeRegion": "London",
+      "containers": "data, code",
+      "dependencies": []
+    },
+    "redis_71": {
+      "initialBatch": 0,
+      "language": "tools",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/tools",
+      "groupId": "com.luopc.platform.script",
+      "artifactId": "tools",
+      "packageType": "tar.gz",
+      "packageName": "redis_7071",
       "activeRegion": "London",
       "containers": "data, code",
       "dependencies": []
@@ -59,7 +71,7 @@
     "mds": {
       "initialBatch": 0,
       "language": "java",
-      "path": "{ROOT_PATH}/opt/public/{USER_PATH}/apps",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
       "groupId": "com.luopc.platform.cloud.service.trade",
       "artifactId": "market-data-service",
       "packageType": "jar",
