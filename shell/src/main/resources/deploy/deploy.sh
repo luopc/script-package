@@ -624,18 +624,18 @@ function deploy_path() {
 }
 
 function print_header() {
-  echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
-  echo -e "${GREEN}|    APPLICATION:         ${DSERVICE_NAME:-$DCOMMAND}                                   "
-  echo -e "${GREEN}|    APPLICATION_VERSION: $DVERSION                                                   "
-  echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
+  echo -e "${GREEN}+-----------------------------------------------------------------------------------+${NC}"
+  echo -e "${GREEN}|    APPLICATION:         ${DSERVICE_NAME:-$DCOMMAND}                                ${NC}"
+  echo -e "${GREEN}|    APPLICATION_VERSION: $DVERSION                                                  ${NC}"
+  echo -e "${GREEN}+-----------------------------------------------------------------------------------+${NC}"
 }
 
 function print_footer() {
-  echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
-  echo -e "${GREEN}|    APPLICATION:         ${DSERVICE_NAME:-$DCOMMAND}                                "
-  echo -e "${GREEN}|    APPLICATION_PATH:    $(deploy_path)                                              "
-  echo -e "${GREEN}|    APPLICATION_VERSION: $DEPLOY_VERSION                                            "
-  echo -e "${GREEN}+-----------------------------------------------------------------------------------+"
+  echo -e "${GREEN}+-----------------------------------------------------------------------------------+${NC}"
+  echo -e "${GREEN}|    APPLICATION:         ${DSERVICE_NAME:-$DCOMMAND}                                ${NC}"
+  echo -e "${GREEN}|    APPLICATION_PATH:    $(deploy_path)                                             ${NC}"
+  echo -e "${GREEN}|    APPLICATION_VERSION: $DEPLOY_VERSION                                            ${NC}"
+  echo -e "${GREEN}+-----------------------------------------------------------------------------------+${NC}"
 }
 
 # Start main logic

@@ -8,6 +8,7 @@ BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m' # Cyan color
 WHITE='\033[1;37m'
+GREY='\033[1;90m'
 NC='\033[0m' # No Color
 
 
@@ -417,7 +418,7 @@ function log_message() {
     local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
     local user=$(getUser)
 
-    echo -e "${color}[${timestamp}] [${user}] ${level}: ${message}${NC}"
+    echo -e "${color}[${timestamp}] [${user}] ${level}: ${message} ${NC}"
 }
 
 function info() {
@@ -426,9 +427,9 @@ function info() {
 
 function debug() {
   if [[ "$(uname -s)" == CYGWIN* || "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
-    log_message "DEBUG" "$1" "${BLUE}"
-  else
     log_message "DEBUG" "$1" "${CYAN}"
+  else
+    log_message "DEBUG" "$1" "${GREY}"
   fi
 }
 
