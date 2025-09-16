@@ -562,7 +562,7 @@ function detect_os() {
 function getUser() {
   get_user
 }
-
+# get root path
 function getRootPath() {
   get_root_path
 }
