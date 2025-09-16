@@ -4,7 +4,7 @@
 
     <groupId>com.luopc.platform.script</groupId>
     <artifactId>script-package</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Script Package</name>
     <modules>
@@ -58,6 +58,6 @@
         <url>https://gitee.com/luo_pc/script-package/</url>
         <connection>scm:git@gitee.com:luo_pc/script-package.git</connection>
         <developerConnection>scm:git:https://gitee.com/luo_pc/script-package.git</developerConnection>
-        <tag>v1.0.1</tag>
+        <tag>v1.0.0</tag>
     </scm>
 </project>
