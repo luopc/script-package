@@ -516,6 +516,183 @@ function get_user() {
   echo "$user"
 }
 
+# Linux专用方法：创建软链接
+create_unix_symlink_linux() {
+  local app_home="$1"
+  local link_dir="$2"
+  local slink_name="$3"
+  local original_pwd="$PWD"
+
+  if ! cd "$app_home"; then
+    error "Failed to change to application directory: $app_home"
+    return 1
+  fi
+
+  # 删除已存在的文件或链接
+  if [ -e "${slink_name}" ]; then
+    rm -f "${slink_name}" || {
+      error "Failed to remove existing logs file/link"
+      cd "$original_pwd"
+      return 1
+    }
+  fi
+
+  # 创建软链接
+  info "Creating symbolic link: $slink_name -> $link_dir"
+  if ! ln -sf "$link_dir" "${slink_name}"; then
+    error "Failed to create symbolic link: $slink_name -> $link_dir"
+    cd "$original_pwd"
+    return 1
+  fi
+
+  # 验证软链接
+  if [[ -L "${slink_name}" ]]; then
+    local link_target
+    link_target="$(readlink "${slink_name}")"
+    if [[ "$link_target" == "$link_dir" ]]; then
+      info "Successfully created symbolic link: "${slink_name}" -> $link_target"
+    else
+      warn "Symbolic link target mismatch. Expected: $link_dir, Actual: $link_target"
+    fi
+  else
+    error "Failed to verify symbolic link creation"
+    cd "$original_pwd"
+    return 1
+  fi
+
+  cd "$original_pwd"
+  debug "Returned to original directory: $original_pwd"
+}
+
+readlink2() {
+  local target="$1"
+
+  # 如果不是符号链接，直接返回路径
+  [ ! -h "$target" ] && echo "$target" && return
+
+  # 提取符号链接指向的目标（兼容不同系统的 ls 输出格式）
+  local link_target
+  link_target=$(ls -ld -- "$target" 2>/dev/null | awk -F ' -> ' '{print $2}')
+
+  # 如果解析失败，报错并退出
+  if [ -z "$link_target" ]; then
+    echo "Error: Failed to resolve symlink '$target'" >&2
+    return 1
+  fi
+
+  # 获取符号链接所在的目录
+  local symlink_dir
+  symlink_dir=$(dirname -- "$target")
+
+  # 如果目标路径是绝对的，直接返回；否则拼接目录
+  if [[ "$link_target" == /* ]]; then
+    echo "$link_target"
+  else
+    # 处理相对路径（如 ../target 或 ./target）
+    echo "$symlink_dir/$link_target" | sed -e 's|/\./|/|g' -e 's|/\.\./|/../|g'
+  fi
+}
+
+function pid_info() {
+  local pid="$1"
+
+  # 检查进程是否存在
+  if ! ps -p "$pid" > /dev/null 2>&1; then
+    echo "该PID[$1]不存在！！"
+    return 1
+  fi
+
+  # 使用 /proc 文件系统获取进程信息，更可靠
+  if [ ! -d "/proc/$pid" ]; then
+    echo "该PID[$1]不存在！！"
+    return 1
+  fi
+
+  # 从 /proc 获取信息
+  local command=$(tr -d '\0' < "/proc/$pid/cmdline")
+  if [ -f "$CMD_FILE" ]; then
+    command=$(cat "$CMD_FILE")
+  fi
+  local user=$(stat -c "%U" "/proc/$pid")
+  local cpu_usage=$(ps -p "$pid" -o pcpu= 2>/dev/null)
+  local mem_usage=$(ps -p "$pid" -o pmem= 2>/dev/null)
+
+  # 获取并格式化开始时间
+  local start_time_secs=$(stat -c "%Y" "/proc/$pid")
+  local friendly_start_time=$(date -d "@$start_time_secs" "+%Y年%m月%d日 %H:%M:%S")
+  local start_time_relative=$(date -d "@$start_time_secs" "+%c")
+
+  # 获取并格式化运行时间
+  local start_time_epoch=$(stat -c "%Y" "/proc/$pid")
+  local now_epoch=$(date +%s)
+  local elapsed_seconds=$((now_epoch - start_time_epoch))
+
+  # 将运行时间转换为更友好的格式
+  local days=$((elapsed_seconds / 86400))
+  local hours=$(( (elapsed_seconds % 86400) / 3600 ))
+  local minutes=$(( (elapsed_seconds % 3600) / 60 ))
+  local seconds=$((elapsed_seconds % 60))
+
+  local friendly_run_time=""
+  if [ $days -gt 0 ]; then
+    friendly_run_time="${friendly_run_time}${days}天"
+  fi
+  if [ $hours -gt 0 ] || [ -n "$friendly_run_time" ]; then
+    friendly_run_time="${friendly_run_time}${hours}小时"
+  fi
+  if [ $minutes -gt 0 ] || [ -n "$friendly_run_time" ]; then
+    friendly_run_time="${friendly_run_time}${minutes}分"
+  fi
+  friendly_run_time="${friendly_run_time}${seconds}秒"
+
+  local state=$(cat "/proc/$pid/status" | grep State | awk '{print $2}')
+  # 将状态代码转换为更友好的描述
+  case "$state" in
+  "R") state_desc="运行中" ;;
+  "S") state_desc="睡眠中" ;;
+  "D") state_desc="不可中断的睡眠" ;;
+  "Z") state_desc="僵尸进程" ;;
+  "T") state_desc="已停止" ;;
+  "t") state_desc="跟踪停止" ;;
+  "X") state_desc="已死亡" ;;
+  "I") state_desc="空闲" ;;
+  *) state_desc="未知状态 ($state)" ;;
+  esac
+
+  local vsz=$(cat "/proc/$pid/status" | grep VmSize | awk '{print $2}')
+  local rss=$(cat "/proc/$pid/status" | grep VmRSS | awk '{print $2}')
+
+  # 格式化内存显示
+  local vsz_friendly=""
+  if [ $vsz -ge 1048576 ]; then
+    vsz_friendly=$(echo "scale=2; $vsz / 1048576" | bc)" GB"
+  elif [ $vsz -ge 1024 ]; then
+    vsz_friendly=$(echo "scale=2; $vsz / 1024" | bc)" MB"
+  else
+    vsz_friendly="${vsz} KB"
+  fi
+
+  local rss_friendly=""
+  if [ $rss -ge 1048576 ]; then
+    rss_friendly=$(echo "scale=2; $rss / 1048576" | bc)" GB"
+  elif [ $rss -ge 1024 ]; then
+    rss_friendly=$(echo "scale=2; $rss / 1024" | bc)" MB"
+  else
+    rss_friendly="${rss} KB"
+  fi
+
+  info "进程PID: $pid"
+  info "进程所属用户: $user"
+  info "CPU占用率：${cpu_usage}%"
+  info "内存占用率：${mem_usage}%"
+  info "进程启动时间：$friendly_start_time"
+  info "进程已运行：$friendly_run_time"
+  info "进程状态：$state_desc"
+  info "进程虚拟内存：$vsz_friendly"
+  info "进程实际内存：$rss_friendly"
+  info "进程命令：${command}..."
+}
+
 # Get root path based on operating system
 # Returns: appropriate root path for the system
 function get_root_path() {
@@ -537,6 +714,11 @@ function get_root_path() {
   esac
 
   echo "$root_path"
+}
+
+# 检查操作系统类型
+is_windows() {
+  [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OSTYPE" == "cygwin" ]]
 }
 
 # Detect operating system

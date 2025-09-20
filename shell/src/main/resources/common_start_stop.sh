@@ -7,15 +7,27 @@ source $DEPLOYMENT_DIR/utils/common_util.sh
 #APP_HOME=${app_path}
 LOG_DATE=$(date +%y%m%d-%H%M%S)
 LOG_PATH=$APP_HOME/logs
-LOG_NAME=${APP_NAME:-default}.console-$LOG_DATE.log
-LOG_FILE=$LOG_PATH/$LOG_NAME
+CONSOLE_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.console-$LOG_DATE.log
+GC_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.gc-$LOG_DATE.log
+SAFE_POINT_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.safepoint-$LOG_DATE.log
+GC_ALL_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.gc-$LOG_DATE.log
+LOG_FILE=$LOG_PATH/$CONSOLE_LOG_NAME
 PID_FILE="$APP_HOME/current/${APP_NAME:-default}.pid"
+CMD_FILE="$APP_HOME/current/${APP_NAME:-default}.cmd"
+DVERSION=$(ls -al $APP_HOME/current | awk '{print $11}' | awk -v FS="/" '{print $2}')
 
-JAVA_OPTS="-Xms128m -Xmx512m -Dspring.profiles.active=${USER} -Denv=${USER}"
+# 设置符合 JDK9+ 的分离日志参数
+JAVA_GC_OPTS="-Xlog:gc*=info:file=${LOG_PATH}/${GC_LOG_NAME}:time,uptimemillis,level,tags:filecount=14,filesize=100M"
+JAVA_GC_OPTS="$JAVA_GC_OPTS -Xlog:safepoint*=info:file=${LOG_PATH}/${SAFE_POINT_LOG_NAME}:time,uptimemillis,level,tags:filecount=5,filesize=50M"
+JAVA_GC_OPTS="$JAVA_GC_OPTS -Xlog:all=warning:file=${LOG_PATH}/${GC_ALL_LOG_NAME}:time,uptimemillis,level,tags"
+
+JAVA_OPTS="-Xms256m -Xmx256m -XX:+UseG1GC"
+JAVA_APP_OPTS="-Dspring.profiles.active=${USER:-uat} -Dapp=${CURRENT_APP} -Dversion=${DVERSION} -Dgroup=${CURRENT_GROUP} -Dinstance=${CURRENT_INSTANCE} -Denv=${USER:-uat} -Dhost=${HOSTNAME} -DlocalPath=${APP_HOME}"
+JAVA_OPTS_ALL="$JAVA_OPTS $JAVA_APP_OPTS $JAVA_GC_OPTS"
 JAR_FILE=$APP_HOME/current/$ARTIFACT_ID.$ARTIFACT_SUFFIX
 
-PID_CMD="ps -ef|grep apps|grep $USER|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
-STAR_CMD="java -jar $JAVA_OPTS $JAR_FILE"
+PID_CMD="ps -ef|grep apps|grep $(getUser)|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
+STAR_CMD="java -jar $JAVA_OPTS_ALL $JAR_FILE"
 
 function show_help() {
   echo "+-----------------------------------------------------------------------+"
@@ -30,25 +42,24 @@ function show_help() {
 }
 
 function go_to_start() {
-  echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$USER] INFO: "
+  info "Going to start $APP_NAME in server [$HOSTNAME]...  "
   green_line ">>> nohup $STAR_CMD >> $LOG_FILE &"
   #-server.port=8081
-  nohup $STAR_CMD >>$LOG_FILE 2>&1 &
-  # Save PID
-  echo $! > "$PID_FILE"
+  nohup $STAR_CMD >>$LOG_FILE 2>&1 & echo $! > "$PID_FILE"
+  echo $STAR_CMD > "$CMD_FILE"
 }
 
 function start() {
-  echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$USER] INFO: Going to start $APP_NAME in server [$HOSTNAME], CURRENT_STATUS = $CURRENT_STATUS. "
+  info "Going to start $APP_NAME in server [$HOSTNAME], CURRENT_STATUS = $CURRENT_STATUS. "
 
   PID=$(query_pid $APP_HOME)
 
   if [[ ${PID} ]]; then
-    echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$USER] INFO: $APP_NAME is already running, pid = $PID...  "
+    info "$APP_NAME is already running, pid = $PID...  "
   elif [[ $CURRENT_STATUS -eq '0' ]]; then
-    echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$USER] INFO: Instance activation is $CURRENT_STATUS, skip starting"
+    info "Instance activation is $CURRENT_STATUS, skip starting"
   else
-    echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$USER] INFO: start $APP_NAME"
+    info "start $APP_NAME"
     if [[ ! -d $LOG_PATH ]]; then
       mkdir -p $LOG_PATH
     fi
@@ -61,7 +72,7 @@ function start() {
       PID=$(query_pid $APP_HOME)
       if [[ ${PID} ]]; then
         WAIT_TIME=100
-        compress_log "$LOG_PATH" "*console-*.log"
+        #compress_log "$LOG_PATH" "*console-*.log"
         info "$APP_NAME activation completed"
         info "Process pid: $PID"
         info "Console log: $LOG_FILE"
@@ -79,7 +90,6 @@ function start() {
 
 function stop() {
   PVERSION=$(query_version)
-  PID=$(cat "$PID_FILE")
   debug "APP_HOME = $APP_HOME, running version = $PVERSION, PID = $PID"
 
   if [[ $STOP_CMD ]]; then
@@ -101,7 +111,7 @@ function stop() {
       PID=$(query_pid $APP_HOME)
       if [[ -z ${PID} ]]; then
         WAIT_TIME=100
-        echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$USER] INFO: $APP_NAME shutdown completed"
+        info " $APP_NAME shutdown completed"
       else
         WAIT_TIME=$((WAIT_TIME + 1))
       fi
@@ -118,6 +128,7 @@ function stop() {
   fi
 
   rm -f "$PID_FILE"
+  rm -f "$CMD_FILE"
 }
 
 function restart() {
@@ -145,7 +156,7 @@ function query() {
 
 
   if [[ ${PID} ]]; then
-    #echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$USER] INFO: $APP_NAME is running.."
+    info "$APP_NAME is running.."
     info "pid = $PID  "
     info "version = $PVERSION  "
     echo "+-----------------------------------summary------------------------------------+"
@@ -161,30 +172,17 @@ function query() {
   fi
 }
 
-function pid_info() {
-  P=$1
-  n=`ps -aux| awk '$2~/^'$P'$/{print $11}'|wc -l`
-  if [ $n -eq 0 ];then
-   echo "该PID不存在！！"
-   exit
-  fi
-  echo "--------------------------------"
-  echo "进程PID: $P"
-  echo "进程命令：`ps -aux| awk '$2~/^'$P'$/{print $11}'`"
-  echo "进程所属用户: `ps -aux| awk '$2~/^'$P'$/{print $1}'`"
-  echo "CPU占用率：`ps -aux| awk '$2~/^'$P'$/{print $3}'`%"
-  echo "内存占用率：`ps -aux| awk '$2~/^'$P'$/{print $4}'`%"
-  echo "进程开始运行的时刻：`ps -aux| awk '$2~/^'$P'$/{print $9}'`"
-  echo "进程运行的时间：`ps -aux| awk '$2~/^'$P'$/{print $10}'`"
-  echo "进程状态：`ps -aux| awk '$2~/^'$P'$/{print $8}'`"
-  echo "进程虚拟内存：`ps -aux| awk '$2~/^'$P'$/{print $5}'`"
-  echo "进程共享内存：`ps -aux| awk '$2~/^'$P'$/{print $6}'`"
-  echo "--------------------------------"
-}
-
 function query_pid() {
   #$( ps -ef|grep apps|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print $2}')
-  tpid=$(eval $PID_CMD)
+  if [ -f "$PID_FILE" ]; then
+    tpid=$(cat "$PID_FILE")
+    if ! ps -p "$tpid" >/dev/null 2>&1; then
+      rm -f "$PID_FILE"
+      tpid=$(eval $PID_CMD)
+    fi
+  else
+    tpid=$(eval $PID_CMD)
+  fi
   echo $tpid
 }
 
@@ -202,7 +200,7 @@ function compress_log() {
   #compresse file
   for FILE in $(find -L $FOLDER_PATH -mindepth 1 -maxdepth 1 -name "$PATTERN" | sort -n | sed '$d'); do
     gzip -f $FILE
-    #echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$USER] INFO: $FILE is compressed."
+    #echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$(getUser)] INFO: $FILE is compressed."
   done
 }
 

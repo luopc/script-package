@@ -13,6 +13,7 @@
   "common": {
     "artifactHome": "{ROOT_PATH}/home/public/{USER_PATH}/repository/artifacts",
     "logHome": "{ROOT_PATH}/home/public/{USER_PATH}/logs",
+    "scriptHome": "{ROOT_PATH}/opt/{USER_PATH}/script",
     "javaHome": "/opt/public/apps/jdk/current"
   },
   "uat": {

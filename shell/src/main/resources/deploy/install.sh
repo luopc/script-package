@@ -15,11 +15,11 @@ Script to install jar packages locally, supports multiple operation types
 Parameter description:
   <type>               Operation type (required): script|init|package|tools|rollback
   <serviceName>        Service name (required): mds|tbs|tqs...
-  <resource_path>      Local jar package path (required): e.g., /c/tmp/xxx.jar
   [version]            Version number: e.g., 6.1.10-SNAPSHOT (optional)
   [instance]           Instance type: master|slave|main|standby|backup|primary|secondary (optional, default: primary)
   [group]              Group name: must be default or start with group/node followed by numbers (optional, default: default)
   [restart]            Whether to restart: 0|1 (optional, default: 0)
+  [resource_path]      Local jar package path (required): e.g., /c/tmp/xxx.jar
 
 Examples:
   $0 script script /c/tmp/script-common-6.1.10.jar 6.1.10-SNAPSHOT primary default 0
@@ -34,14 +34,14 @@ serviceName=""
 resourcePath=""
 version=""
 instance="primary"
-group="default"
+cluster="default"
 restart=0
 TEMP_OUTPUT="/tmp"
 
 # Parse positional parameters
 parse_args() {
   # Check minimum parameter count
-  if [ $# -lt 3 ]; then
+  if [ $# -lt 2 ]; then
     error "Error: Insufficient parameters" >&2
     show_help
     exit 1
@@ -50,13 +50,13 @@ parse_args() {
   # Required parameters
   type="$1"
   serviceName="$2"
-  resourcePath="$3"
 
   # Optional parameters (assigned by position)
-  if [ $# -ge 4 ]; then version="$4"; fi
-  if [ $# -ge 5 ]; then instance="$5"; fi
-  if [ $# -ge 6 ]; then group="$6"; fi
-  if [ $# -ge 7 ]; then restart="$7"; fi
+  if [ $# -ge 3 ]; then version="$3"; fi
+  if [ $# -ge 4 ]; then instance="$4"; fi
+  if [ $# -ge 5 ]; then cluster="$5"; fi
+  if [ $# -ge 6 ]; then restart="$6"; fi
+  if [ $# -ge 7 ]; then resourcePath="$7"; fi
 
   # Validate parameter value legality
   if [[ ! "$type" =~ ^(script|init|package|tools|rollback)$ ]]; then
@@ -69,8 +69,8 @@ parse_args() {
     exit 1
   fi
 
-  if [[ ! "$group" =~ ^(default|group[0-9]+|node[0-9]+)$ ]]; then
-    error "Error: Invalid group value, must be default or start with group/node followed by numbers" >&2
+  if [[ ! "$cluster" =~ ^(default|group[0-9]+|node[0-9]+)$ ]]; then
+    error "Error: Invalid cluster value, must be default or start with group/node followed by numbers" >&2
     exit 1
   fi
 
@@ -79,10 +79,12 @@ parse_args() {
     exit 1
   fi
 
-  # Validate if resource file exists
-  if [ ! -f "$resourcePath" ]; then
-    error "unable to find source from path - $resourcePath" >&2
-    exit 1
+  # Validate if resource file exists (optimized)
+  if [ -n "$resourcePath" ]; then  # 只有当resourcePath不为空时才检查
+    if [ ! -f "$resourcePath" ]; then
+      error "Unable to find source file at path: $resourcePath" >&2
+      exit 1
+    fi
   fi
 }
 
@@ -94,7 +96,7 @@ show_params() {
   info "Resource Path: $resourcePath"
   info "Version: ${version:-Not specified}"
   info "Instance Type: $instance"
-  info "Group: $group"
+  info "Cluster: $cluster"
   info "Restart: $restart"
   info "=================================="
 }
@@ -136,21 +138,12 @@ function handle_init() {
   local artifactSuffix=$(get_service_config "$serviceName" "packageType")
   local packageType=$(get_service_config "$serviceName" "packageType")
   local packageName=$(get_service_config "$serviceName" "packageName")
+
   info "package_path=${package_path}"
-
-  local target_dir="$TEMP_OUTPUT"
-  if [ -d $target_dir ]; then
-    process_package_file "tar.gz" $resourcePath "$TEMP_OUTPUT" "$artifactId"
-  else
-    error "package hasn't been initialized yet, please check you resource file. path=$target_dir"
-  fi
-
   local output_dir=$(replace_path "${package_path}")
   if [[ "$language" == "java" ]]; then
-    target_dir="$target_dir/$artifactId/java"
-    output_dir="$output_dir/$serviceName"_"$instance"_"$group"
+    output_dir="$output_dir/$serviceName"_"$instance"_"$cluster"
   elif [[ "$language" == "tools" ]]; then
-    target_dir="$target_dir/$artifactId/$packageName"
     output_dir="$output_dir/$serviceName"
   else
     error "Error: Unsupported language type: $language" >&2
@@ -160,16 +153,26 @@ function handle_init() {
   info "output_dir=${output_dir}"
   create_target_dir "$output_dir"
 
-  info "Copying files from :$target_dir"
-  info "Copying files to   :$output_dir"
-
-  if [[ -d $target_dir && -d $output_dir ]]; then
-    process_package_file "file" "$target_dir/*" "$output_dir/"
+  if [ ! -n "$language" ]; then
+    echo "language not found"
+  elif [ "$language" == "java" ]; then
+    handle_package
   else
-    error "package hasn't been initialized yet, please check you resource file. path=$output_dir"
+    process_package_file "${packageType}" $resourcePath "$TEMP_OUTPUT" "$artifactId"
+
+    local target_dir="$TEMP_OUTPUT/$artifactId/$packageName"
+    info "Copying files from :$target_dir"
+    info "Copying files to   :$output_dir"
+
+    if [[ -d $target_dir && -d $output_dir ]]; then
+      process_package_file "file" "$target_dir/*" "$output_dir/"
+    else
+      error "package hasn't been initialized yet, please check you resource file. path=$output_dir"
+    fi
   fi
 
   init_logDir $output_dir
+  update_start_stop_link "$output_dir"
   update_profile $output_dir
   info "Initialization package installed to: $output_dir"
 }
@@ -185,12 +188,17 @@ function handle_package() {
 
   # Base path template
   local target_dir=$(replace_path "${package_path}")
-  target_dir="$target_dir/$serviceName"_"$instance"_"$group"
+  target_dir="$target_dir/$serviceName"_"$instance"_"$cluster"
   info "target_dir=${target_dir}"
 
   if [ -d $target_dir ]; then
     create_target_dir "$target_dir/version/$version"
-    process_package_file "${packageType}" $resourcePath "$target_dir/version/$version" "$artifactId.$artifactSuffix"
+    if [ "$artifactSuffix" == "jar"  ]; then
+      process_package_file "${packageType}" $resourcePath "$target_dir/version/$version" "$artifactId.$artifactSuffix"
+    elif [ "$artifactSuffix" == "tar.gz"  ]; then
+      process_package_file "tar.gz" $resourcePath "$TEMP_OUTPUT" "$artifactId"
+      process_package_file "file" "$TEMP_OUTPUT/*" "$target_dir/version/$version"
+    fi
     update_soft_link "$target_dir" "version/$version"
     restart_service "$target_dir"
   else
@@ -202,7 +210,7 @@ function handle_package() {
 # Handle tools type
 handle_tools() {
   info "===== Executing tools installation ====="
-  target_dir="/usr/local/services/$serviceName/$group/$instance/tools"
+  target_dir="/usr/local/services/$serviceName/$cluster/$instance/tools"
   create_target_dir "$target_dir"
 
   # Copy file
@@ -226,7 +234,7 @@ handle_rollback() {
     exit 1
   fi
 
-  target_dir="/usr/local/services/$serviceName/$group/$instance/packages/$version"
+  target_dir="/usr/local/services/$serviceName/$cluster/$instance/packages/$version"
   if [ ! -d "$target_dir" ]; then
     info "Error: Version directory does not exist - $target_dir" >&2
     exit 1
@@ -240,7 +248,7 @@ handle_rollback() {
   fi
 
   # Restore link
-  ln -sf "$jar_file" "/usr/local/services/$serviceName/$group/$instance/current.jar"
+  ln -sf "$jar_file" "/usr/local/services/$serviceName/$cluster/$instance/current.jar"
   info "Rolled back to version: $version"
   info "Currently using jar package: $jar_file"
 }
@@ -263,50 +271,92 @@ restart_service() {
   fi
 }
 
-function init_logDir() { 
+update_start_stop_link() {
   local appHome=$1
-  local logHome=$(get_common_config "logHome")
-  logHome=$(replace_path "$logHome")
-  info "logHome=$logHome"
-  
-  local log_dir="$logHome/$(serviceName)"
-  if [ ! -d "$log_dir" ]; then
-    mkdir -p "$log_dir"
-  fi
+  local scriptHome=$(get_common_config "scriptHome")
+  scriptHome="$(replace_path "$scriptHome")/shell/current"
+  info "Get scriptHome from config=$scriptHome"
 
-  local original_pwd="$PWD"
-  if ! cd "$appHome"; then
-    error "Failed to change to application directory: $appHome"
-    return 1
-  fi
+  local start_script="$scriptHome/unix_scripts/start.sh"
+  local stop_script="$scriptHome/unix_scripts/stop.sh"
+  local query_script="$scriptHome/unix_scripts/query.sh"
+  local restart_script="$scriptHome/unix_scripts/restart.sh"
 
-  
-  # Create new symbolic link
-  info "Creating new symbolic link: logs -> $log_dir"
-  if ! ln -sf "$log_dir" "logs"; then
-    error "Failed to create symbolic link: logs -> $log_dir"
-    cd "$original_pwd"
-    return 1
-  fi
-
-  # Verify the symbolic link was created correctly
-  if [[ -L "logs" ]]; then
-    local link_target
-    link_target="$(readlink "logs")"
-    if [[ "$link_target" == "$log_dir" ]]; then
-      info "Successfully created symbolic link: logs -> $link_target"
+  if [ -f "$start_script" ]; then
+    if is_windows; then
+      info "Windows system, copy script to $appHome"
+      if ! cp "$start_script" "$appHome"; then
+        error "Failed to copy start.sh from -> $start_script"
+        return 1
+      else
+        cp "$stop_script" "$appHome"
+        cp "$query_script" "$appHome"
+        cp "$restart_script" "$appHome"
+      fi
     else
-      warn "Symbolic link target mismatch. Expected: $log_dir, Actual: $link_target"
+      info "Linux system, create soft link to $appHome"
+      create_unix_symlink_linux "${appHome}" "$start_script" "start.sh"
+      create_unix_symlink_linux "${appHome}" "$stop_script" "stop.sh"
+      create_unix_symlink_linux "${appHome}" "$query_script" "query.sh"
+      create_unix_symlink_linux "${appHome}" "$restart_script" "restart.sh"
     fi
   else
-    error "Failed to verify symbolic link creation"
-    cd "$original_pwd"
+    error "start_script not found: $start_script"
+  fi
+
+  if [[ "$(uname -s)" == "Linux"* ]]; then
+    timeout 120 ssh -q $(getUser)@$HOSTNAME ". ~/.bash_profile; cd $APP_HOME; chmod 750 *.sh"
+    debug "command: timeout 120 ssh -q $(getUser)@$HOSTNAME '. ~/.bash_profile; cd $APP_HOME; chmod 750 *.sh' "
+  fi
+}
+
+# Windows专用方法：创建日志文件夹（如果logs不存在）
+create_log_dir_windows() {
+  local app_home="$1"
+  local log_dir="$2"
+  local original_pwd="$PWD"
+
+  if ! cd "$app_home"; then
+    error "Failed to change to application directory: $app_home"
     return 1
   fi
 
-  # Return to original directory
+  # 如果logs目录不存在则创建
+  if [ ! -d "logs" ]; then
+    mkdir "logs" || {
+      error "Failed to create logs directory in Windows"
+      cd "$original_pwd"
+      return 1
+    }
+    info "Created logs directory in Windows: $app_home/logs"
+  fi
+
   cd "$original_pwd"
   debug "Returned to original directory: $original_pwd"
+}
+
+# 主方法：初始化日志目录（根据系统自动选择实现）
+init_logDir() {
+  local appHome=$1
+  local logHome=$(get_common_config "logHome")
+  local language=$(get_service_config "$serviceName" "language" "unknown")
+  logHome=$(replace_path "$logHome")
+  info "logHome=$logHome"
+
+  local log_dir="$logHome/${language}/${serviceName}/$instance/$cluster"
+
+  # 创建日志目录（通用）
+  create_target_dir "$log_dir" || return 1
+
+  # 根据系统选择实现
+  if is_windows; then
+    info "Windows system detected - creating logs directory"
+    create_log_dir_windows "$appHome" "$log_dir" || return 1
+  else
+    info "Linux system detected - creating symbolic link"
+    create_unix_symlink_linux "$appHome" "$log_dir" "logs" || return 1
+  fi
+
   info "Initialized log directory: $log_dir"
 }
 
@@ -321,13 +371,8 @@ function init_logDir() {
 function update_profile() {
   local APP_HOME="$1"
 
-  if [[ "$(uname -s)" == "Linux"* ]]; then
-    timeout 120 ssh -q $(getUser)@$HOSTNAME ". ~/.bash_profile; cd $APP_HOME; chmod 750 *.sh"
-    debug "command: timeout 120 ssh -q $(getUser)@$HOSTNAME '. ~/.bash_profile; cd $APP_HOME; chmod 750 *.sh' "
-  fi
-
   local profile_file="$APP_HOME/instance.profile"
-  local backup_file="$APP_HOME/instance.profile.backup.$(date +%Y%m%d_%H%M%S)"
+  local backup_file="$APP_HOME/instance.profile.backup.$(date +%Y%m%d_%H%M%S).txt"
 
   # Validate input parameters
   if [[ -z "$APP_HOME" ]]; then
@@ -346,11 +391,17 @@ function update_profile() {
   groupId=$(get_service_config "$serviceName" "groupId")
   artifactId=$(get_service_config "$serviceName" "artifactId")
   artifactSuffix=$(get_service_config "$serviceName" "packageType")
+  jvmOptions=$(get_service_config "$serviceName" "jvmOptions")
+  javaHome=$(get_service_config "$serviceName" "javaHome")
 
   # Validate required configuration values
   if [[ -z "$groupId" || -z "$artifactId" ]]; then
     error "Error: Missing required service configuration (groupId or artifactId) for service: $serviceName"
     return 1
+  fi
+
+  if [ -n "$javaHome" ]; then
+    javaHome=$(replace_path "$javaHome")/bin/java
   fi
 
   info "Updating instance profile: $profile_file"
@@ -367,17 +418,18 @@ function update_profile() {
   # Generate profile content in a single operation
   local profile_content
   profile_content=$(cat << EOF
-# Instance Profile - Generated on $(date)
-# Service: $serviceName, Instance: ${instance:-primary}, Group: ${group:-default}
+# Instance Profile - Generated on $(date +'%Y-%m-%d %H:%M:%S')
+# Service: $serviceName, Instance: ${instance:-primary}, Group: ${cluster:-default}
 export CURRENT_STATUS=1
 export CURRENT_APP="${serviceName}"
 export CURRENT_INSTANCE="${instance:-primary}"
-export CURRENT_GROUP="${group:-default}"
+export CURRENT_GROUP="${cluster:-default}"
 export ARTIFACT_GROUP_ID="${groupId}"
 export ARTIFACT_ID="${artifactId}"
 export LANGUAGE="${language}"
 export ARTIFACT_SUFFIX="${artifactSuffix}"
-# Profile generated by install.sh at $(date +'%Y-%m-%d %H:%M:%S')
+export JVM_OPTIONS="${jvmOptions}"
+export JDK_PATH="${javaHome}"
 EOF
 )
 
@@ -410,7 +462,7 @@ EOF
   debug "Profile content preview:"
   debug "  CURRENT_APP: ${serviceName}"
   debug "  CURRENT_INSTANCE: ${instance:-primary}"
-  debug "  CURRENT_GROUP: ${group:-default}"
+  debug "  CURRENT_GROUP: ${cluster:-default}"
   debug "  ARTIFACT_ID: ${artifactId}"
 
   return 0
@@ -418,7 +470,7 @@ EOF
 
 # Manual service restart
 manual_restart() {
-  service_path="/usr/local/services/$serviceName/$group/$instance"
+  service_path="/usr/local/services/$serviceName/$cluster/$instance"
   # Find and stop service process
   pid=$(ps -ef | grep "$serviceName" | grep -v grep | awk '{print $2}')
   if [ -n "$pid" ]; then

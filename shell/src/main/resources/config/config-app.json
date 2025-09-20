@@ -2,6 +2,7 @@
   "common": {
     "artifactHome": "{ROOT_PATH}/home/public/{USER_PATH}/repository/artifacts",
     "logHome": "{ROOT_PATH}/home/public/{USER_PATH}/logs",
+    "scriptHome": "{ROOT_PATH}/opt/{USER_PATH}/script",
     "javaHome": "/opt/public/apps/jdk/current",
     "startSh": "/opt/$USER_PATH/script/common/current/service/start.sh",
     "stopSh": "/opt/$USER_PATH/script/common/current/service/stop.sh",
@@ -34,7 +35,7 @@
     },
     "tools": {
       "initialBatch": 0,
-      "language": "python",
+      "language": "shell",
       "path": "{ROOT_PATH}/opt/public/apps",
       "groupId": "com.luopc.platform.script",
       "artifactId": "tools",
@@ -94,15 +95,17 @@
       "port": 8084,
       "dependencies": []
     },
-    "ods": {
+    "test1": {
       "initialBatch": 0,
-      "language": "python",
+      "language": "java",
       "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
-      "groupId": "com.luopc.platform.cloud.service.order",
-      "artifactId": "order-service",
-      "packageType": "tar.gz",
+      "groupId": "com.luopc.platform.boot",
+      "artifactId": "common-example",
+      "packageType": "jar",
       "activeRegion": "BJ",
       "containers": "data, code",
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
       "dependencies": []
     },
     "auth-service": {

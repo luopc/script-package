@@ -33,11 +33,11 @@ Deployment tool, supports the following commands:
 
   deploy -package {service-name} [-v {version} -c {primary} -g {default} -h {hostname,hostname} -r]
   deploy -p {service-name} [-v {version} -c {primary} -g {default} -h {hostname,hostname} -r]
-                               Package service, optional version, instance, group, hosts and restart
+                               Package service, optional version, instance, Cluster, hosts and restart
 
   deploy -rollback {service-name} [-v {version} -c {primary} -g {default} -h {hostname,hostname} -r]
   deploy -b {service-name} [-v {version} -c {primary} -g {default} -h {hostname,hostname} -r]
-                               Rollback service, optional version, instance, group, hosts and restart
+                               Rollback service, optional version, instance, Cluster, hosts and restart
 
 Option descriptions:
   -h {hosts}      Specify hosts, multiple hosts separated by commas
@@ -62,8 +62,17 @@ function init_service(){
   info "going to init component[$DSERVICE_NAME] to version [$DVERSION], hostName=$DHOST"
   validate_service_name "$DSERVICE_NAME" || exit 1
 
-  retrieve_version_from_meta "tools" $DVERSION
-  download_package_from_nexus "tools"
+  local language=$(get_service_config "$DSERVICE_NAME" "language")
+  info "going to init component with language=$language"
+  if [ ! -n "$language" ]; then
+    echo "language not found"
+  elif [ "$language" == "java" ]; then
+    retrieve_version_from_meta $DSERVICE_NAME $DVERSION
+    download_package_from_nexus $DSERVICE_NAME
+  else
+    retrieve_version_from_meta "tools" $DVERSION
+    download_package_from_nexus "tools"
+  fi
   copy_install
 }
 
@@ -187,7 +196,7 @@ function scp_package() {
 
 function call_remote_install() {
   DEPLOY_HOST=$1
-  local CMD=". ~/.bash_profile;"$DEPLOYMENT_DIR/install.sh" $DCOMMAND $DSERVICE_NAME $REPO_FILE $DEPLOY_VERSION $DINSTANCE $DGROUP $DRESTART"
+  local CMD=". ~/.bash_profile;"$DEPLOYMENT_DIR/install.sh" $DCOMMAND $DSERVICE_NAME $DEPLOY_VERSION $DINSTANCE $DCLUSTER $DRESTART $REPO_FILE"
 
   green_line "run cmd in remote server[$(getUser)@$DEPLOY_HOST]: $CMD"
   if [[ "$(uname -s)" == "Linux"* ]]; then
@@ -272,7 +281,7 @@ function download_from_nexus() {
   info "DOWNLOAD_URL=$download_url"
 
   local status=$(check_url "$download_url" || echo 0)
-  if [ -z "$status" ] || [ "$status" -ne 200 ]; then
+  if [ $? -ne 0 ]; then
     error "package cannot be found in nexus. fileName=$fileName, version=$DEPLOY_VERSION"
     exit 1
   fi
@@ -396,8 +405,7 @@ function process_specific_version() {
 
   local pom_url=$(get_nexus_url_by_version "$groupId" "$artifactId" "$version" "$artifactId-$version.pom")
   local status=$(check_url $pom_url || echo 0)
-
-  if [ -z "$status" ] || [ "$status" -ne 200 ]; then
+  if [ $? -ne 0 ]; then
     error "maven-metadata cannot be found in nexus. groupId=$1,artifactId=$2,version=$3"
     exit 1
   fi
@@ -410,9 +418,6 @@ function process_specific_version() {
 # Check URL and pull metadata
 function check_and_pull_metadata() {
   local url=$1
-  status=$(check_url "$url" || echo 0)
-  [ -z "$status" ] || [ "$status" -ne 200 ] && return 1
-
   pull_from_nexus "$url" "$TEMP_DIR/$2/"
   return 0
 }
@@ -463,7 +468,7 @@ main() {
   DVERSION="latest"
   DHOST=""
   DINSTANCE="primary"
-  DGROUP="default"
+  DCLUSTER="default"
   DRESTART=0
 
   # Parse command line arguments
@@ -515,7 +520,7 @@ main() {
       ;;
     -v)
       shift
-      DVERSION="$1"
+      DVERSION="${1:-latest}"
       shift
       ;;
     -h)
@@ -530,7 +535,7 @@ main() {
       ;;
     -g)
       shift
-      DGROUP="$1"
+      DCLUSTER="$1"
       shift
       ;;
     -r)
@@ -590,7 +595,7 @@ main() {
     info "Packaging service $DSERVICE_NAME:"
     [ -n "$DVERSION" ] && info "  Version: $DVERSION"
     info "  Instance: $DINSTANCE"
-    info "  Group: $DGROUP"
+    info "  Cluster: $DCLUSTER"
     [ $DRESTART -eq 1 ] && info "  Restart after operation: Yes"
     deploy_package
     info "  Service packaging completed"
@@ -601,7 +606,7 @@ main() {
     info "Rolling back service $DSERVICE_NAME:"
     [ -n "$DVERSION" ] && info "  Rollback to version: $DVERSION"
     info "  Instance: $DINSTANCE"
-    info "  Group: $DGROUP"
+    info "  Cluster: $DCLUSTER"
     rollback_service
     print_footer
     ;;
