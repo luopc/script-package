@@ -12,8 +12,8 @@ GC_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-de
 SAFE_POINT_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.safepoint-$LOG_DATE.log
 GC_ALL_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.gc-$LOG_DATE.log
 LOG_FILE=$LOG_PATH/$CONSOLE_LOG_NAME
-PID_FILE="$APP_HOME/current/${APP_NAME:-default}.pid"
-CMD_FILE="$APP_HOME/current/${APP_NAME:-default}.cmd"
+PID_FILE="$APP_HOME/version/${APP_NAME:-default}.pid"
+CMD_FILE="$APP_HOME/version/${APP_NAME:-default}.cmd"
 DVERSION=$(ls -al $APP_HOME/current | awk '{print $11}' | awk -v FS="/" '{print $2}')
 
 # 设置符合 JDK9+ 的分离日志参数
@@ -203,21 +203,3 @@ function compress_log() {
     #echo "[$(date +%Y-%m-%d_%H:%M:%S)] [$(getUser)] INFO: $FILE is compressed."
   done
 }
-
-function show_head() {
-  echo "+------------------------------------------------------------------------------------------------------+"
-  echo "                         This is the application [$APP_NAME] running script...                         "
-  echo "+                                        Starting to print Log                                         +"
-}
-
-if [ $# == 0 ]; then
-  show_head
-elif [[ $1 == "start" ]]; then
-  start
-elif [[ $1 == "stop" ]]; then
-  stop
-elif [[ $1 == "restart" ]]; then
-  restart
-elif [[ $1 == "query" ]]; then
-  query
-fi

@@ -82,17 +82,18 @@
       "port": 0,
       "dependencies": []
     },
-    "tcs": {
+    "gateway": {
       "initialBatch": 0,
       "language": "java",
       "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
-      "groupId": "com.luopc.platform.cloud.service.trade",
-      "artifactId": "trade-capture-service",
+      "groupId": "com.luopc.platform.infra",
+      "artifactId": "gateway-service",
       "packageType": "jar",
       "activeRegion": "BJ",
       "containers": "data, code",
-      "jvmOptions": "-Xmx512m -Xms256m",
-      "port": 8084,
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
+      "port": 8095,
       "dependencies": []
     },
     "test1": {
