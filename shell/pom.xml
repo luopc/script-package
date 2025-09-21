@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.luopc.platform.script</groupId>
         <artifactId>script-package</artifactId>
-        <version>1.0.7-SNAPSHOT</version>
+        <version>1.0.7</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -45,7 +45,7 @@
                         <configuration>
                             <target>
                                 <!-- 指定要处理的目录，例如 ${basedir}/src/main/scripts -->
-                                <fixcrlf srcdir="${basedir}/src/main/resources" includes="**/*.sh" eol="unix"/>
+                                <fixcrlf srcdir="${basedir}/src/main/resources" includes="**/*.sh" eol="unix" />
                                 <!-- 如果有多个目录，可以配置多行 -->
                             </target>
                         </configuration>
