@@ -10,6 +10,5 @@ info "Checking [${APP_NAME}] : $APP_HOME"
 if [ -f "${APP_HOME}/run.sh" ]; then
   source "${APP_HOME}/run.sh"
 fi
-
 #----command---
 query

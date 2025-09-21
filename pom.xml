@@ -33,26 +33,6 @@
                         <arguments>-DskipTests</arguments>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.4.0</version>
-                    <executions>
-                        <execution>
-                            <id>fix-line-endings</id>
-                            <phase>process-resources</phase>
-                            <goals>
-                                <goal>fix-line-ending</goal>
-                            </goals>
-                            <configuration>
-                                <files>
-                                    <file>src/main/resources/**/*.sh</file>
-                                </files>
-                                <lineEndings>UNIX</lineEndings>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>

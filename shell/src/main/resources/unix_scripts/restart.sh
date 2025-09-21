@@ -17,6 +17,5 @@ else
     STAR_CMD="sh ${APP_HOME}/current/bin/start.sh"
   fi
 fi
-
 #----command---
 restart

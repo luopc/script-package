@@ -17,5 +17,5 @@ else
     STAR_CMD="sh ${APP_HOME}/current/bin/start.sh"
   fi
 fi
+#----command---
 start
-info "Starting $COMPONENT_NAME version: $(query_version)"
