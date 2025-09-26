@@ -7,15 +7,18 @@ source ${APP_HOME}/instance.profile
 source /opt/$USER/script/shell/current/common_start_stop.sh
 info "Restarting [${APP_NAME}] : $APP_HOME"
 
-if [ -f "${APP_HOME}/run.sh" ]; then
-  source "${APP_HOME}/run.sh"
-else
+if [ "$LANGUAGE" == "java" ]; then
+  JAVA_OPTS_ALL="${JVM_OPTIONS} $JAVA_APP_OPTS $JAVA_GC_OPTS"
   if [ "$ARTIFACT_SUFFIX" == "jar"  ]; then
-    JAVA_OPTS_ALL="${JVM_OPTIONS} $JAVA_APP_OPTS $JAVA_GC_OPTS"
     STAR_CMD="${JDK_PATH:-java} -jar $JAVA_OPTS_ALL $JAR_FILE"
   else
-    STAR_CMD="sh ${APP_HOME}/current/bin/start.sh"
+    CONFIG_DIR="${APP_HOME}/current/config/"
+    STAR_CMD="${JDK_PATH:-java} -jar $JAVA_OPTS_ALL ${APP_HOME}/current/boot/$ARTIFACT_ID.jar --spring.config.location=${CONFIG_DIR} "
   fi
+elif [ -f "${APP_HOME}/bin/start.sh" ]; then
+  source "${APP_HOME}/bin/start.sh"
+elif [ -f "${APP_HOME}/run.sh" ]; then
+  source "${APP_HOME}/run.sh"
 fi
 #----command---
 restart

@@ -197,7 +197,7 @@ function handle_package() {
       process_package_file "${packageType}" $resourcePath "$target_dir/version/$version" "$artifactId.$artifactSuffix"
     elif [ "$artifactSuffix" == "tar.gz"  ]; then
       process_package_file "tar.gz" $resourcePath "$TEMP_OUTPUT" "$artifactId"
-      process_package_file "file" "$TEMP_OUTPUT/*" "$target_dir/version/$version"
+      process_package_file "file" "$TEMP_OUTPUT/${artifactId}/*" "$target_dir/version/$version"
     fi
     update_soft_link "$target_dir" "version/$version"
     restart_service "$target_dir"

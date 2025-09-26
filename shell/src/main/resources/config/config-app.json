@@ -109,15 +109,17 @@
       "javaHome": "/opt/public/apps/jdk/jdk21",
       "dependencies": []
     },
-    "auth-service": {
+    "ass": {
       "initialBatch": 0,
-      "language": "nodejs",
+      "language": "java",
       "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
-      "groupId": "com.luopc.platform.cloud.service.auth",
-      "artifactId": "auth-service",
-      "packageType": "jar",
+      "groupId": "com.luopc.platform.boot",
+      "artifactId": "common-assembly",
+      "packageType": "tar.gz",
       "activeRegion": "BJ",
       "containers": "data, code",
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
       "dependencies": []
     }
   }

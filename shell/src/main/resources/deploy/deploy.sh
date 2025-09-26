@@ -145,19 +145,21 @@ function list_services() {
 }
 
 function copy_install() {
-  local appInfo=$DSERVICE_NAME
-  local language=$(get_service_config "$appInfo" "language")
+  if [ -f "${DOWNLOAD_PACKAGE}" ]; then
+    local appInfo=$DSERVICE_NAME
+    local language=$(get_service_config "$appInfo" "language")
 
-  if [ -n "$DHOST" ]; then
-    info "going to deploy package[${DOWNLOAD_PACKAGE}] to host[]"
-    scp_package $language ${DOWNLOAD_PACKAGE} $DHOST
-    call_remote_install $DHOST
-  else
-    for ((i = 0; i < ${#HOSTNAMES[@]}; i++)); do
-      info "going to deploy package[${DOWNLOAD_PACKAGE}] to host[${HOSTNAMES[i]}]"
-      scp_package $language ${DOWNLOAD_PACKAGE} ${HOSTNAMES[i]}
-      call_remote_install ${HOSTNAMES[i]}
-    done
+    if [ -n "$DHOST" ]; then
+      info "going to deploy package[${DOWNLOAD_PACKAGE}] to host[]"
+      scp_package $language ${DOWNLOAD_PACKAGE} $DHOST
+      call_remote_install $DHOST
+    else
+      for ((i = 0; i < ${#HOSTNAMES[@]}; i++)); do
+        info "going to deploy package[${DOWNLOAD_PACKAGE}] to host[${HOSTNAMES[i]}]"
+        scp_package $language ${DOWNLOAD_PACKAGE} ${HOSTNAMES[i]}
+        call_remote_install ${HOSTNAMES[i]}
+      done
+    fi
   fi
 }
 
@@ -236,32 +238,35 @@ function get_service_hosts() {
 function download_package_from_nexus() {
   local appInfo=$1
   local module=${2:-}
+  if [ -n "$PACKAGE_VERSION" ]; then
+    # 获取包信息
+    local package_path=$(get_service_config "$appInfo" "path")
+    local artifact_group_id=$(get_service_config "$appInfo" "groupId")
+    local artifact_id=$(get_service_config "$appInfo" "artifactId")
+    local artifact_suffix=$(get_service_config "$appInfo" "packageType")
+    local module=$(get_service_config "$appInfo" "module")
 
-  # 获取包信息
-  local package_path=$(get_service_config "$appInfo" "path")
-  local artifact_group_id=$(get_service_config "$appInfo" "groupId")
-  local artifact_id=$(get_service_config "$appInfo" "artifactId")
-  local artifact_suffix=$(get_service_config "$appInfo" "packageType")
-  local module=$(get_service_config "$appInfo" "module")
+    # 验证包信息
+    validate_package_info "$artifact_id"
 
-  # 验证包信息
-  validate_package_info "$artifact_id"
+    # 准备下载文件
+    local download_file="$artifact_id-$PACKAGE_VERSION.$artifact_suffix"
+    green_line "DOWNLOAD_INFO=[$package_path, $artifact_id, $artifact_group_id, $module, $artifact_suffix, $DEPLOY_VERSION, $PACKAGE_VERSION]"
 
-  # 准备下载文件
-  local download_file="$artifact_id-$PACKAGE_VERSION.$artifact_suffix"
-  green_line "DOWNLOAD_INFO=[$package_path, $artifact_id, $artifact_group_id, $module, $artifact_suffix, $DEPLOY_VERSION, $PACKAGE_VERSION]"
+    # 下载包
+    download_from_nexus "$artifact_group_id" "$artifact_id" "$download_file"
 
-  # 下载包
-  download_from_nexus "$artifact_group_id" "$artifact_id" "$download_file"
+    # 等待并验证下载
+    wait_for_download "$download_file" || {
+      error "package[$artifact_id] version [$PACKAGE_VERSION] cannot be found, please check your script."
+      exit 1
+    }
 
-  # 等待并验证下载
-  wait_for_download "$download_file" || {
-    error "package[$artifact_id] version [$PACKAGE_VERSION] cannot be found, please check your script."
+    DOWNLOAD_PACKAGE="$TEMP_DIR/$download_file"
+    info "package is ready, path=$DOWNLOAD_PACKAGE"
+  else
     exit 1
-  }
-
-  DOWNLOAD_PACKAGE="$TEMP_DIR/$download_file"
-  info "package is ready, path=$DOWNLOAD_PACKAGE"
+  fi
 }
 
 
@@ -355,32 +360,44 @@ function process_snapshot_version() {
 
   DEPLOY_VERSION=$version
   local tmp_metadata="$TEMP_DIR/$version/maven-metadata.xml"
-  PACKAGE_VERSION=$(awk '/<value>[^<]+<\/value>/{gsub(/<value>|<\/value>/,"",$1);print $1;exit;}' ${tmp_metadata})
-  debug_metadata_status
+  if [ -f "$tmp_metadata" ]; then
+    CLASSIFIER=$(awk '/<classifier>[^<]+<\/classifier>/{gsub(/<classifier>|<\/classifier>/,"",$1);print $1;exit;}' ${tmp_metadata})
+    PACKAGE_VERSION=$(awk '/<value>[^<]+<\/value>/{gsub(/<value>|<\/value>/,"",$1);print $1;exit;}' ${tmp_metadata})
+    if [[ -n "$CLASSIFIER" &&  -n "$PACKAGE_VERSION" ]]; then
+      PACKAGE_VERSION=$PACKAGE_VERSION-$CLASSIFIER
+    fi
+    debug_metadata_status
+  else
+    error "maven-metadata cannot be found in nexus. version=$version"
+    exit 1
+  fi
 }
 
 # Process latest version
 function process_latest_version() {
   local groupId=$1 artifactId=$2
   METADATA_URL=$(get_nexus_url "$groupId" "$artifactId" maven-metadata.xml)
-  info "url = $METADATA_URL"
+  info "latest_version url = $METADATA_URL"
 
   if ! check_and_pull_metadata "$METADATA_URL"; then
     error "maven-metadata cannot be found in nexus. groupId=$1,artifactId=$2,version=latest"
     exit 1
   fi
 
-  LATEST_VERSION=$(awk '/<latest>[^<]+<\/latest>/{gsub(/<latest>|<\/latest>/,"",$1);print $1;exit;}' $TEMP_DIR/maven-metadata.xml)
-  DEPLOY_VERSION=$LATEST_VERSION
-
-  if [[ $LATEST_VERSION == *SNAPSHOT ]]; then
-    process_snapshot_version "$groupId" "$artifactId" "$LATEST_VERSION"
-  else
-    PACKAGE_VERSION=$LATEST_VERSION
+  if [ -f "$TEMP_DIR/maven-metadata.xml" ]; then
+    LATEST_VERSION=$(awk '/<latest>[^<]+<\/latest>/{gsub(/<latest>|<\/latest>/,"",$1);print $1;exit;}' $TEMP_DIR/maven-metadata.xml)
     DEPLOY_VERSION=$LATEST_VERSION
-  fi
 
-  debug_metadata_status
+    if [[ $LATEST_VERSION == *SNAPSHOT ]]; then
+      process_snapshot_version "$groupId" "$artifactId" "$LATEST_VERSION"
+    else
+      PACKAGE_VERSION=$LATEST_VERSION
+      DEPLOY_VERSION=$LATEST_VERSION
+    fi
+    debug_metadata_status
+  else
+    error "maven-metadata cannot be found in nexus. groupId=$1,artifactId=$2,version=latest"
+  fi
 }
 
 # Process release version
@@ -392,10 +409,14 @@ function process_release_version() {
     error "maven-metadata cannot be found in nexus. groupId=$1, artifactId=$2, version=release"
     exit 1
   fi
-
-  PACKAGE_VERSION=$(awk '/<release>[^<]+<\/release>/{gsub(/<release>|<\/release>/,"",$1);print $1;exit;}' $TEMP_DIR/maven-metadata.xml)
-  DEPLOY_VERSION=$PACKAGE_VERSION
-  debug_metadata_status
+  if [ -f "$TEMP_DIR/maven-metadata.xml" ]; then
+    PACKAGE_VERSION=$(awk '/<release>[^<]+<\/release>/{gsub(/<release>|<\/release>/,"",$1);print $1;exit;}' $TEMP_DIR/maven-metadata.xml)
+    DEPLOY_VERSION=$PACKAGE_VERSION
+    debug_metadata_status
+  else
+    error "maven-metadata cannot be found in nexus. groupId=$1, artifactId=$2, version=release"
+    exit 1
+  fi
 }
 
 # Process specific version
@@ -417,8 +438,7 @@ function process_specific_version() {
 
 # Check URL and pull metadata
 function check_and_pull_metadata() {
-  local url=$1
-  pull_from_nexus "$url" "$TEMP_DIR/$2/"
+  local status=$(pull_from_nexus "$1" "$TEMP_DIR/$2/")
   return 0
 }
 
@@ -430,7 +450,7 @@ function get_artifact_path() {
 
 # Debug metadata status
 function debug_metadata_status() {
-  info "Getting metadata from nexus: $METADATA_URL, status=$status, PACKAGE_VERSION=$PACKAGE_VERSION"
+  info "Getting metadata from nexus: $METADATA_URL, PACKAGE_VERSION=$PACKAGE_VERSION, DEPLOY_VERSION=$DEPLOY_VERSION"
 }
 
 # Initialize configuration

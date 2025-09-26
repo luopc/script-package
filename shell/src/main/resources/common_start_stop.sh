@@ -7,39 +7,38 @@ source $DEPLOYMENT_DIR/utils/common_util.sh
 #APP_HOME=${app_path}
 LOG_DATE=$(date +%y%m%d-%H%M%S)
 LOG_PATH=$APP_HOME/logs
-CONSOLE_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.console-$LOG_DATE.log
+
 GC_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.gc-$LOG_DATE.log
 SAFE_POINT_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.safepoint-$LOG_DATE.log
 GC_ALL_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.gc-$LOG_DATE.log
-LOG_FILE=$LOG_PATH/$CONSOLE_LOG_NAME
-PID_FILE="$APP_HOME/version/${APP_NAME:-default}.pid"
-CMD_FILE="$APP_HOME/version/${APP_NAME:-default}.cmd"
-DVERSION=$(ls -al $APP_HOME/current | awk '{print $11}' | awk -v FS="/" '{print $2}')
-
 # 设置符合 JDK9+ 的分离日志参数
 JAVA_GC_OPTS="-Xlog:gc*=info:file=${LOG_PATH}/${GC_LOG_NAME}:time,uptimemillis,level,tags:filecount=14,filesize=100M"
 JAVA_GC_OPTS="$JAVA_GC_OPTS -Xlog:safepoint*=info:file=${LOG_PATH}/${SAFE_POINT_LOG_NAME}:time,uptimemillis,level,tags:filecount=5,filesize=50M"
 JAVA_GC_OPTS="$JAVA_GC_OPTS -Xlog:all=warning:file=${LOG_PATH}/${GC_ALL_LOG_NAME}:time,uptimemillis,level,tags"
 
-JAVA_OPTS="-Xms256m -Xmx256m -XX:+UseG1GC"
-JAVA_APP_OPTS="-Dspring.profiles.active=${USER:-uat} -Dapp=${CURRENT_APP} -Dversion=${DVERSION} -Dgroup=${CURRENT_GROUP} -Dinstance=${CURRENT_INSTANCE} -Denv=${USER:-uat} -Dhost=${HOSTNAME} -DlocalPath=${APP_HOME}"
-JAVA_OPTS_ALL="$JAVA_OPTS $JAVA_APP_OPTS $JAVA_GC_OPTS"
+CONSOLE_LOG_NAME=${CURRENT_APP:-app}.${CURRENT_INSTANCE:-primary}.${CURRENT_GROUP:-default}.${USER:-uat}.console-$LOG_DATE.log
+LOG_FILE=$LOG_PATH/$CONSOLE_LOG_NAME
+PID_FILE="$APP_HOME/version/${APP_NAME:-default}.pid"
+CMD_FILE="$APP_HOME/version/${APP_NAME:-default}.cmd"
+DVERSION=$(ls -al $APP_HOME/current | awk '{print $11}' | awk -v FS="/" '{print $2}')
+
+#==========================================================================================
+# JVM Configuration
+# -Xmx256m:设置JVM最大可用内存为256m,根据项目实际情况而定，建议最小和最大设置成一样。
+# -Xms256m:设置JVM初始内存。此值可以设置与-Xmx相同,以避免每次垃圾回收完成后JVM重新分配内存
+# -Xmn512m:设置年轻代大小为512m。整个JVM内存大小=年轻代大小 + 年老代大小 + 持久代大小。
+#          持久代一般固定大小为64m,所以增大年轻代,将会减小年老代大小。此值对系统性能影响较大,Sun官方推荐配置为整个堆的3/8
+# -XX:MetaspaceSize=64m:存储class的内存大小,该值越大触发Metaspace GC的时机就越晚
+# -XX:MaxMetaspaceSize=320m:限制Metaspace增长的上限，防止因为某些情况导致Metaspace无限的使用本地内存，影响到其他程序
+# -XX:-OmitStackTraceInFastThrow:解决重复异常不打印堆栈信息问题
+#==========================================================================================
+JAVA_OPT="-server -Xms256m -Xmx256m -Xmn512m -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=256m"
+JAVA_APP_OPTS="-XX:-OmitStackTraceInFastThrow -Dspring.profiles.active=${USER:-uat} -Dapp=${CURRENT_APP} -Dversion=${DVERSION} -Dgroup=${CURRENT_GROUP} -Dinstance=${CURRENT_INSTANCE} -Denv=${USER:-uat} -Dhost=${HOSTNAME} -DlocalPath=${APP_HOME}"
+JAVA_OPTS_ALL="$JAVA_OPT $JAVA_APP_OPTS $JAVA_GC_OPTS"
 JAR_FILE=$APP_HOME/current/$ARTIFACT_ID.$ARTIFACT_SUFFIX
 
 PID_CMD="ps -ef|grep apps|grep $(getUser)|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
 STAR_CMD="java -jar $JAVA_OPTS_ALL $JAR_FILE"
-
-function show_help() {
-  echo "+-----------------------------------------------------------------------+"
-  echo "|     This is an application running script...                          |"
-  echo "|     deploy apps     :     deploy -p $APP_NAME -v <version>            |"
-  echo "|     deploy component:     deploy -i $APP_NAME -v <version>            |"
-  echo "|     start-script    :     ./run.sh start                              |"
-  echo "|     stop-script     :     ./run.sh stop                               |"
-  echo "|     restart-script  :     ./run.sh restart                            |"
-  echo "|     query-script    :     ./run.sh query                              |"
-  echo "+-----------------------------------------------------------------------+"
-}
 
 function go_to_start() {
   info "Going to start $APP_NAME in server [$HOSTNAME]...  "
