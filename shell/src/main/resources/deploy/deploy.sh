@@ -76,14 +76,22 @@ function init_service(){
   copy_install
 }
 
-function deploy_tools(){
+function restart_tools(){
   DHOST="${DHOST:-$(HOSTNAME)}"
-  info "going to init component[$DSERVICE_NAME] to version [$DVERSION], hostName=$DHOST"
+  info "going restart tools[$DSERVICE_NAME], hostName=$DHOST"
   validate_service_name "$DSERVICE_NAME" || exit 1
 
-  retrieve_version_from_meta "tools" $DVERSION
-  download_package_from_nexus "tools"
-  copy_install
+  if [ -n "$DHOST" ]; then
+    info "going to restart tools on the box[$DHOST]"
+    call_remote_restart $DHOST
+  else
+    for ((i = 0; i < ${#HOSTNAMES[@]}; i++)); do
+      info "going to restart tools on the box[${HOSTNAMES[i]}]"
+
+      call_remote_restart ${HOSTNAMES[i]}
+    done
+  fi
+
 }
 
 function deploy_package() {
@@ -96,6 +104,18 @@ function deploy_package() {
 
 function rollback_package() {
   info "going to rollback component[$DSERVICE_NAME] to version [$DVERSION], hostName=$DHOST"
+}
+
+function call_remote_restart() {
+  DEPLOY_HOST=$1
+  local CMD=". ~/.bash_profile;"$DEPLOYMENT_DIR/install.sh" $DCOMMAND $DSERVICE_NAME"
+
+  green_line "run cmd in remote server[$(getUser)@$DEPLOY_HOST]: $CMD"
+  if [[ "$(uname -s)" == "Linux"* ]]; then
+    timeout 120 ssh -q $(getUser)@$DEPLOY_HOST "$CMD"
+  else
+    warn "please run cmd in Linux server."
+  fi
 }
 
 check_service_status() {
@@ -145,10 +165,10 @@ function list_services() {
 }
 
 function copy_install() {
-  if [ -f "${DOWNLOAD_PACKAGE}" ]; then
-    local appInfo=$DSERVICE_NAME
-    local language=$(get_service_config "$appInfo" "language")
+  local appInfo=$DSERVICE_NAME
+  local language=$(get_service_config "$appInfo" "language")
 
+  if [ -f "${DOWNLOAD_PACKAGE}" ]; then
     if [ -n "$DHOST" ]; then
       info "going to deploy package[${DOWNLOAD_PACKAGE}] to host[]"
       scp_package $language ${DOWNLOAD_PACKAGE} $DHOST
@@ -160,6 +180,8 @@ function copy_install() {
         call_remote_install ${HOSTNAMES[i]}
       done
     fi
+  elif [ "$language" == "tools" ]; then
+    info "tools package, no need to install"
   fi
 }
 
@@ -607,7 +629,7 @@ main() {
   tools)
     print_header
     info "Deploying tools to service $DSERVICE_NAME:"
-    deploy_tools
+    restart_tools
     print_footer
     ;;
   package)
@@ -635,8 +657,8 @@ main() {
     exit 1
     ;;
   esac
-  if [[ -d $TEMP_DIR ]]; then
-    rm -rf $TEMP_DIR
+  if [[ -d "$TEMP_DIR" ]]; then
+    rm -rf "$TEMP_DIR"
   fi
   exit 0
 }

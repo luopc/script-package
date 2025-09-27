@@ -173,7 +173,9 @@ function handle_init() {
 
   init_logDir $output_dir
   update_start_stop_link "$output_dir"
-  update_profile $output_dir
+  if [ "$language" == "java" ]; then
+    update_profile $output_dir
+  fi
   info "Initialization package installed to: $output_dir"
 }
 
@@ -210,20 +212,24 @@ function handle_package() {
 # Handle tools type
 handle_tools() {
   info "===== Executing tools installation ====="
-  target_dir="/usr/local/services/$serviceName/$cluster/$instance/tools"
-  create_target_dir "$target_dir"
 
-  # Copy file
-  cp "$resourcePath" "$target_dir/" || {
-    info "Error: File copy failed" >&2
-    exit 1
-  }
+  # Get package information
+  local package_path=$(get_service_config "$serviceName" "path")
+  local packageName=$(get_service_config "$serviceName" "packageName")
 
-  # Record tool version
-  if [ -n "$version" ]; then
-    info "$(date +'%Y-%m-%d %H:%M:%S') $(basename "$resourcePath") $version" >> "$target_dir/version_history.log"
+  # Base path template
+  local target_dir=$(replace_path "${package_path}")
+  target_dir="$target_dir/$packageName"
+  info "target_dir=${target_dir}"
+
+  if [ -d $target_dir ]; then
+    restart=1
+    restart_service "${target_dir}"
+  else
+    error "tools [$serviceName] hasn't been initialized yet, please check the path=$target_dir"
   fi
-  info "Tools package installed to: $target_dir"
+
+  info "Tools handle completed: $target_dir"
 }
 
 # Handle rollback type
@@ -263,10 +269,10 @@ restart_service() {
     if [ -f "$service_path/restart.sh" ]; then
       "$service_path/restart.sh" || {
         info "Warning: Restart script execution failed, attempting manual restart"
-        manual_restart
+        manual_restart $1
       }
     else
-      manual_restart
+      manual_restart $1
     fi
   fi
 }
@@ -470,9 +476,10 @@ EOF
 
 # Manual service restart
 manual_restart() {
-  service_path="/usr/local/services/$serviceName/$cluster/$instance"
+  local service_path=$1
+
   # Find and stop service process
-  pid=$(ps -ef | grep "$serviceName" | grep -v grep | awk '{print $2}')
+  pid=$(query_pid "$1")
   if [ -n "$pid" ]; then
     info "Stopping service process: $pid"
     kill -TERM "$pid"
@@ -486,16 +493,35 @@ manual_restart() {
 
   # Start service
   info "Starting service..."
-  nohup java -jar "$service_path/current.jar" > "$service_path/logs/console.log" 2>&1 &
-  sleep 2
+  if [ -f "$service_path/start.sh" ]; then
+    "$service_path/start.sh" || {
+      error "Start script execution failed"
+      return 1
+    }
+  fi
 
   # Check startup status
-  new_pid=$(ps -ef | grep "$serviceName" | grep -v grep | awk '{print $2}')
+  new_pid=$(query_pid "$1")
   if [ -n "$new_pid" ]; then
-    info "Service started, process ID: $new_pid"
+    green_line "Service started, process ID: $new_pid"
   else
-    info "Warning: Service startup failed, please check logs"
+    warn "Service startup failed, please check logs"
   fi
+}
+
+function query_pid() {
+  local pidFile="$1/version/${APP_NAME:-default}.pid"
+  local pidCmd="ps -ef|grep apps|grep $(getUser)|grep "$serviceName"|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
+  if [ -f "$pidFile" ]; then
+    tpid=$(cat "$pidFile")
+    if ! ps -p "$tpid" >/dev/null 2>&1; then
+      rm -f "$pidFile"
+      tpid=$(eval $pidCmd)
+    fi
+  else
+    tpid=$(eval $pidCmd)
+  fi
+  echo $tpid
 }
 
 # Main function
@@ -525,7 +551,9 @@ main() {
     exit 1
     ;;
   esac
-
+  if [[ -d "$TEMP_OUTPUT" ]]; then
+    rm -rf "$(getRootPath)/tmp/tmp.*"
+  fi
   info "===== Operation completed ====="
 }
 

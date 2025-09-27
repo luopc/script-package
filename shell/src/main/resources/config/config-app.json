@@ -16,6 +16,7 @@
       "groupId": "com.luopc.platform.script",
       "artifactId": "shell",
       "packageType": "tar.gz",
+      "packageName": "script",
       "port": 0,
       "dependencies": [],
       "containers": "all",
@@ -36,7 +37,7 @@
     "tools": {
       "initialBatch": 0,
       "language": "shell",
-      "path": "{ROOT_PATH}/opt/public/apps",
+      "path": "{ROOT_PATH}/opt/public/tools",
       "groupId": "com.luopc.platform.script",
       "artifactId": "tools",
       "packageType": "tar.gz",
@@ -44,6 +45,18 @@
       "dependencies": [],
       "containers": "all",
       "activeRegion": "all"
+    },
+    "zookeeper": {
+      "initialBatch": 0,
+      "language": "tools",
+      "path": "{ROOT_PATH}/opt/public/tools",
+      "groupId": "com.luopc.platform.script",
+      "artifactId": "tools",
+      "packageType": "tar.gz",
+      "packageName": "zookeeper",
+      "activeRegion": "London",
+      "containers": "data, code",
+      "dependencies": []
     },
     "redis_70": {
       "initialBatch": 0,
@@ -97,6 +110,19 @@
       "dependencies": []
     },
     "test1": {
+      "initialBatch": 0,
+      "language": "java",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.boot",
+      "artifactId": "common-example",
+      "packageType": "jar",
+      "activeRegion": "BJ",
+      "containers": "data, code",
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
+      "dependencies": []
+    },
+    "exa": {
       "initialBatch": 0,
       "language": "java",
       "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",

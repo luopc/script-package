@@ -37,7 +37,7 @@ JAVA_APP_OPTS="-XX:-OmitStackTraceInFastThrow -Dspring.profiles.active=${USER:-u
 JAVA_OPTS_ALL="$JAVA_OPT $JAVA_APP_OPTS $JAVA_GC_OPTS"
 JAR_FILE=$APP_HOME/current/$ARTIFACT_ID.$ARTIFACT_SUFFIX
 
-PID_CMD="ps -ef|grep apps|grep $(getUser)|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
+PID_CMD="ps -ef|grep 'apps|tools'|grep $(getUser)|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
 STAR_CMD="java -jar $JAVA_OPTS_ALL $JAR_FILE"
 
 function go_to_start() {
@@ -54,9 +54,9 @@ function start() {
   PID=$(query_pid $APP_HOME)
 
   if [[ ${PID} ]]; then
-    info "$APP_NAME is already running, pid = $PID...  "
+    cyan_line "$APP_NAME is already running, pid = $PID...  "
   elif [[ $CURRENT_STATUS -eq '0' ]]; then
-    info "Instance activation is $CURRENT_STATUS, skip starting"
+    warn "Instance activation is $CURRENT_STATUS, skip starting"
   else
     info "start $APP_NAME"
     if [[ ! -d $LOG_PATH ]]; then
