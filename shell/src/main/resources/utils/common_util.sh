@@ -89,10 +89,10 @@ function process_package_file() {
   case $app_type in
     file)
       info "Moving configuration file: $input_path -> $output_path"
-      mv -f $input_path $output_path || {
-        error "Failed to move configuration file with command: mv -f '$input_path' '$output_path'"
+      cp -rf $input_path $output_path || {
+        error "Failed to move configuration file with command: cp -rf '$input_path' '$output_path'"
       }
-      debug "Executed command: mv -f '$input_path' '$output_path'"
+      debug "Executed command: cp -rf '$input_path' '$output_path'"
       ;;
     jar)
       local dest_path="$output_path/${file_name:-$(basename "$input_path")}"

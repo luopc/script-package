@@ -147,6 +147,76 @@
       "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
       "javaHome": "/opt/public/apps/jdk/jdk21",
       "dependencies": []
+    },
+    "mdas": {
+      "initialBatch": 0,
+      "language": "java",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.market",
+      "artifactId": "market-data-acquisition-server",
+      "packageType": "jar",
+      "activeRegion": "HK",
+      "containers": "data, code",
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
+      "port": 0,
+      "dependencies": []
+    },
+    "fwrc": {
+      "initialBatch": 0,
+      "language": "java",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.market",
+      "artifactId": "forward-rate-calculation-server",
+      "packageType": "jar",
+      "activeRegion": "HK",
+      "containers": "data, code",
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
+      "port": 0,
+      "dependencies": []
+    },
+    "rpds": {
+      "initialBatch": 0,
+      "language": "java",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.market",
+      "artifactId": "report-distribution-server",
+      "packageType": "jar",
+      "activeRegion": "HK",
+      "containers": "data, code",
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
+      "port": 0,
+      "dependencies": []
+    },
+    "rpgs": {
+      "initialBatch": 0,
+      "language": "java",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.market",
+      "artifactId": "report-generation-server",
+      "packageType": "jar",
+      "activeRegion": "HK",
+      "containers": "data, code",
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
+      "port": 0,
+      "dependencies": []
+    },
+    "mdsui": {
+      "initialBatch": 0,
+      "language": "java",
+      "path": "{ROOT_PATH}/home/public/{USER_PATH}/apps",
+      "groupId": "com.luopc.platform.market",
+      "artifactId": "market-data-display-server",
+      "packageType": "tar.gz",
+      "activeRegion": "HK",
+      "containers": "data, code",
+      "jvmOptions": "-Xmx256m -Xms256m -XX:+UseG1GC",
+      "javaHome": "/opt/public/apps/jdk/jdk21",
+      "port": 0,
+      "dependencies": []
     }
   }
 }

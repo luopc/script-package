@@ -552,7 +552,7 @@ main() {
     ;;
   esac
   if [[ -d "$TEMP_OUTPUT" ]]; then
-    rm -rf "$(getRootPath)/tmp/tmp.*"
+    rm -rf $TEMP_OUTPUT
   fi
   info "===== Operation completed ====="
 }

@@ -658,7 +658,7 @@ main() {
     ;;
   esac
   if [[ -d "$TEMP_DIR" ]]; then
-    rm -rf "$TEMP_DIR"
+    rm -rf $TEMP_DIR
   fi
   exit 0
 }
