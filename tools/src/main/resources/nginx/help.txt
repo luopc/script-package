@@ -1,0 +1,30 @@
+我需要你帮我编写一个自动安装nginx的shell脚本, 实现以下的步骤。
+    0. 检查nginx的依赖，比如：gcc zlib zlib-devel pcre-devel gcc-c++ libtool openssl openssl-devel
+    1. 调用install-nginx.sh脚本安装nginx, 需要传入版本号作为参数: 比如1.24.0, 如果未传入，则使用脚本获取官方最新版本。
+    2. 获取到当前的目录, 比如：current_dir=$(pwd)
+    3. 检查${current_dir}/version目录下是否已经安装当前的版本的nginx, 查看是否存在目录${current_dir}/version/nginx-1.24.0, 如果存在, 则提示用户已经安装, 并将当前目录${current_dir}的current 软连接到新安装的目录，比如：ln -s ${current_dir}/version/nginx-1.24.0 current
+    4. 如果未安装，则检查./package/nginx-1.24.0.tar.gz 下是否已经下载了指定版本的nginx压缩包, 如果没有, 则从官方网站下载指定版本的nginx压缩包, 比如：wget https://nginx.org/download/nginx-1.24.0.tar.gz
+    5. 如果未下载，则下载安装包下载到当前目录的package目录下, 比如：./package/nginx-1.24.0.tar.gz
+    6. 如果未解压, 则解压安装包, 比如：tar -zxvf nginx-1.24.0.tar.gz
+    7. 进入解压后的目录, 比如：cd nginx-1.24.0
+    8. 配置nginx, 比如：./configure --prefix=${current_dir}/version/nginx-1.24.0 --with-http_ssl_module --with-http_stub_status_module --with-http_gzip_static_module --with-zlib --with-openssl --with-http_v3_module
+    9. 编译安装nginx, 比如：make && make install
+    10. 安装成功以后，将当前目录的current 软连接到新安装的目录，比如：ln -s ${current_dir}/version/nginx-1.24.0 current
+    11. 使用当前目录的start.sh脚本启动nginx, 比如：./start.sh
+    12. 使用统一的日志函数管理日志输出：
+    # 日志函数
+    log_info() {
+      echo -e "${BLUE}[INFO]${NC} $1"
+    }
+
+    log_success() {
+      echo -e "${GREEN}[SUCCESS]${NC} $1"
+    }
+
+    log_warning() {
+      echo -e "${YELLOW}[WARNING]${NC} $1"
+    }
+
+    log_error() {
+      echo -e "${RED}[ERROR]${NC} $1"
+    }

@@ -176,6 +176,9 @@ function handle_init() {
   if [ "$language" == "java" ]; then
     update_profile $output_dir
   fi
+  if [[ -f $output_dir/updateConfig.sh ]]; then
+      sh $output_dir/updateConfig.sh
+  fi
   info "Initialization package installed to: $output_dir"
 }
 

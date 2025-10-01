@@ -203,7 +203,7 @@ function scp_package() {
     scp $deploy_package $(getUser)@$deployHost:$repo
 
     debug "command: timeout 60 ssh -q $(getUser)@$deployHost 'mkdir -p $repo'"
-    debug "command: $deploy_package $(getUser)@$deployHost:$repo"
+    debug "command: scp $deploy_package $(getUser)@$deployHost:$repo"
 
     info "Copy package to remote repository: "
   else

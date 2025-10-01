@@ -46,16 +46,16 @@
       "containers": "all",
       "activeRegion": "all"
     },
-    "zookeeper": {
+    "nginx": {
       "initialBatch": 0,
       "language": "tools",
       "path": "{ROOT_PATH}/opt/public/tools",
       "groupId": "com.luopc.platform.script",
       "artifactId": "tools",
       "packageType": "tar.gz",
-      "packageName": "zookeeper",
+      "packageName": "nginx",
       "activeRegion": "London",
-      "containers": "data, code",
+      "containers": "all",
       "dependencies": []
     },
     "redis_70": {

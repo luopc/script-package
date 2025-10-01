@@ -26,7 +26,7 @@ function check_url() {
   while [ $retries -lt $max_retries ]; do
     # 使用curl获取HTTP头信息（超时5秒，忽略SSL证书验证）
     # 添加--connect-timeout防止连接阶段无限等待
-    curl_output=$(curl -s -m 5 --connect-timeout 5 -IL --ssl-no-revoke "$url" 2>/dev/null)
+    curl_output=$(curl -s -m 5 --connect-timeout 5 -IL "$url" 2>/dev/null)
 
     # 提取状态码（更健壮的解析方式）
     http_status_code=$(echo "$curl_output" | grep -E '^HTTP/[0-9]+\.[0-9]+' | awk '{print $2}' | head -n1)
@@ -118,9 +118,11 @@ function pull_from_nexus() {
       error "Failed to create directory: $out_put"
       return 1
     }
-    wget --timeout=3000 --tries=3 -nv --show-progress -P "$out_put" "$download_url"
+    #wget --timeout=3000 --tries=3 -nv --show-progress -P "$out_put" "$download_url" support in Wget 1.16+
+    wget --timeout=3000 --tries=3 -nv -P "$out_put" "$download_url"
   else
-    wget --timeout=3000 --tries=3 -nv --show-progress -O "$out_put" "$download_url"
+    #wget --timeout=3000 --tries=3 -nv --show-progress -O "$out_put" "$download_url"
+    wget --timeout=3000 --tries=3 -nv -O "$out_put" "$download_url"
   fi
   info "-----------------------------------end-----------------------------------------------"
   sleep 1s

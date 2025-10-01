@@ -37,7 +37,7 @@ JAVA_APP_OPTS="-XX:-OmitStackTraceInFastThrow -Dspring.profiles.active=${USER:-u
 JAVA_OPTS_ALL="$JAVA_OPT $JAVA_APP_OPTS $JAVA_GC_OPTS"
 JAR_FILE=$APP_HOME/current/$ARTIFACT_ID.$ARTIFACT_SUFFIX
 
-PID_CMD="ps -ef|grep 'apps|tools'|grep $(getUser)|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
+PID_CMD="ps -ef|grep 'apps\|tools'|grep $(getUser)|grep $APP_NAME|grep -v grep|grep -v sh|grep -v kill|awk '{print \$2}'"
 STAR_CMD="java -jar $JAVA_OPTS_ALL $JAR_FILE"
 
 function go_to_start() {
@@ -166,7 +166,7 @@ function query() {
       echo "+------------------------------------------------------------------------------+"
     fi
   else
-    info "ACTIVATION_STATUS is [$CURRENT_STATUS], $([[ $CURRENT_STATUS == 1 ]] && echo "expected to be started" || echo "skip starting") "
+    info "ACTIVATION_STATUS is [$CURRENT_STATUS], $([[ "$CURRENT_STATUS" == 1 ]] && echo "expected to be started" || echo "skip starting") "
     info "$APP_NAME is not running.  "
   fi
 }

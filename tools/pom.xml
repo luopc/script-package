@@ -31,6 +31,36 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version> <!-- 请使用最新版本 -->
+                <executions>
+                    <execution>
+                        <id>fix-shell-script-line-endings</id>
+                        <phase>process-resources</phase> <!-- 在处理资源阶段执行 -->
+                        <configuration>
+                            <target>
+                                <!-- 指定要处理的目录，例如 ${basedir}/src/main/scripts -->
+                                <fixcrlf srcdir="${basedir}/src/main/resources" includes="**/*.sh" eol="unix" />
+                                <fixcrlf srcdir="${basedir}/src/main/resources" includes="**/*.profile" eol="unix" />
+                                <!-- 如果有多个目录，可以配置多行 -->
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <!-- 需要依赖 ant 核心库来提供 fixcrlf 任务 -->
+                    <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant</artifactId>
+                        <version>1.10.14</version> <!-- 请使用最新版本 -->
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 </project>

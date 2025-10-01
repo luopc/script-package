@@ -2,6 +2,6 @@
 export CURRENT_STATUS=1
 export CURRENT_INSTANCE=primary
 export CURRENT_GROUP=default
-export ARTIFACT_GROUP_ID=com.luopc.script
+export ARTIFACT_GROUP_ID=com.luopc.platform.script
 export ARTIFACT_ID=nginx
-export ARTIFACT_SUFFIX=bin.tar.gz
+export ARTIFACT_SUFFIX=tar.gz
