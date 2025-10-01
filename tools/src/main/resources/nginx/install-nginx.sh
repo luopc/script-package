@@ -138,7 +138,6 @@ install_nginx() {
   mkdir -p "$version_dir"
 
   # 2. 检查是否已下载源码包
-  local package_path="${package_dir}/nginx.tar.gz"
   local nginx_url="https://nginx.org/download/nginx-${version}.tar.gz"
 
   log_info "检查nginx-${version}源码包..."
@@ -192,15 +191,6 @@ install_nginx() {
 
   # 7. 返回原始目录
   cd "$current_dir" || return 1
-
-  # 8 ggplot2::geom_sf(data = china_sf) + ggplot2::coord_sf() + ggplot2::theme_minimal() +
-  #   ggplot2::theme(axis.text = ggplot2::element_blank(),
-  #                  axis.title = ggplot2::element_blank(),
-  #                  panel.grid = ggplot2::element_blank()) +
-  #   ggplot2::geom_sf(data = sf_points, color = "red", size = 3) +
-  #   ggplot2::ggtitle("地震震中分布图") +
-  #   ggplot2::scale_fill_gradient(low = "lightyellow", high = "darkred", name = "震级") +
-  #   ggplot2::guides(size = FALSE). 创建current软链接
   log_info "创建current软链接..."
   if [ -L "current" ]; then
     rm -f "current"
