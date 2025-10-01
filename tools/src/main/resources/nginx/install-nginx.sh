@@ -209,6 +209,13 @@ install_nginx() {
 
   log_success "Nginx ${version} 安装成功!"
 
+  # 8. 为Nginx添加网络绑定权限
+  log_info "为Nginx添加网络绑定权限..."
+  sudo /usr/sbin/setcap 'cap_net_bind_service=+ep' ${current_dir}/current/sbin/nginx || {
+    log_error "为Nginx添加网络绑定权限失败"
+    return 1
+  }
+
   # 9. 尝试启动Nginx
   if [ -f "start.sh" ]; then
     log_info "尝试启动Nginx..."

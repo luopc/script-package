@@ -28,3 +28,6 @@
     log_error() {
       echo -e "${RED}[ERROR]${NC} $1"
     }
+
+# 仅允许对 /opt/nginx/ 目录下的 nginx 程序赋予使用80端口的权限
+robin ALL=(ALL) NOPASSWD: /usr/sbin/setcap 'cap_net_bind_service=+ep' /opt/public/*/nginx/current/sbin/nginx
